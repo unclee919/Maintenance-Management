@@ -61,13 +61,42 @@
    "fieldtype": "Check",
    "label": "Auto-Assign Technician via Smart Dispatch"
   },
-  {
-   "default": "30",
-   "fieldname": "default_warranty_days",
-   "fieldtype": "Int",
-   "label": "Default Warranty Period (Days)"
-  }
- ],
+	  {
+	   "default": "30",
+	   "fieldname": "default_warranty_days",
+	   "fieldtype": "Int",
+	   "label": "Default Warranty Period (Days)"
+	  },
+	  {
+	   "fieldname": "reporting_section",
+	   "fieldtype": "Section Break",
+	   "label": "Automated Reporting & Alerting Configuration"
+	  },
+	  {
+	   "default": "1",
+	   "fieldname": "enable_monthly_report",
+	   "fieldtype": "Check",
+	   "label": "Enable Automated Monthly Performance Report"
+	  },
+	  {
+	   "fieldname": "monthly_report_email",
+	   "fieldtype": "Data",
+	   "label": "Monthly Report Recipient Email",
+	   "default": "manager@elmrkz.cloud"
+	  },
+	  {
+	   "default": "30",
+	   "fieldname": "response_time_threshold_mins",
+	   "fieldtype": "Int",
+	   "label": "Response Time Alert Threshold (Mins)"
+	  },
+	  {
+	   "default": "manager@elmrkz.cloud",
+	   "fieldname": "alert_email_recipients",
+	   "fieldtype": "Data",
+	   "label": "Alert Email Recipients"
+	  }
+	 ],
  "icon": "octicon octicon-settings",
  "idx": 1,
  "is_single": 1,
