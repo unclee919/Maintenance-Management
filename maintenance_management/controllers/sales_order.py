@@ -138,10 +138,10 @@ def process_erpnext_integration(doc):
                         "doctype": "Sales Invoice",
                         "customer": doc.customer,
                         "sales_order": doc.name,
-                        "items": inv_items
+                        "items": inv_items,
+                        "docstatus": 1
                     })
                     inv.insert(ignore_permissions=True)
-                    inv.submit()
                     frappe.logger().info(f"Created Sales Invoice {inv.name} for Sales Order {doc.name}")
                 except Exception as inv_err:
                     import traceback
