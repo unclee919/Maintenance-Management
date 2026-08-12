@@ -26,6 +26,5 @@ scheduler_events = {
 fixtures = [
     {"dt": "Custom Field", "filters": [["module", "=", "Maintenance Management"]]},
     {"dt": "Workspace", "filters": [["module", "=", "Maintenance Management"]]},
-    {"dt": "Dashboard Chart", "filters": [["module", "=", "Maintenance Management"]]},
-    {"dt": "Module Def", "filters": [["module_name", "=", "Maintenance Management"]]}
+    {"dt": "Dashboard Chart", "filters": [["module", "=", "Maintenance Management"]]}
 ]
