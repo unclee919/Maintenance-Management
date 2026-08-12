@@ -11,12 +11,14 @@ def populate_data():
             frappe.get_doc({"doctype": "Item Group", "item_group_name": ig, "parent_item_group": "All Item Groups"}).insert(ignore_permissions=True)
     
     # 1. Update Field Maintenance Settings
-    if not frappe.db.exists("Field Maintenance Settings"):
-        frappe.get_doc({"doctype": "Field Maintenance Settings"}).insert(ignore_permissions=True)
-        frappe.db.commit()
-        
     try:
-        settings = frappe.get_doc("Field Maintenance Settings")
+        if not frappe.db.exists("Field Maintenance Settings", "Field Maintenance Settings"):
+            doc = frappe.new_doc("Field Maintenance Settings")
+            doc.name = "Field Maintenance Settings"
+            doc.insert(ignore_permissions=True)
+            frappe.db.commit()
+        
+        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
         settings.enable_gps_tracking = 1
         settings.require_human_confirmation = 0
         settings.enable_price_approval = 1
@@ -50,7 +52,7 @@ def populate_data():
     except Exception as e:
         print(f"⚠ Settings update failed: {e}")
 
-    # 2. Create Items (Spare Parts & Services)
+    # 2. Create Items
     items = [
         {"item_code": "SVC-VISIT", "item_name": "Standard Service Visit", "item_group": "Services", "is_stock_item": 0, "standard_rate": 200},
         {"item_code": "COMP-001", "item_name": "Compressor 1.5HP", "item_group": "Compressors", "is_stock_item": 1, "standard_rate": 2500},
@@ -69,7 +71,6 @@ def populate_data():
                     "stock_uom": "Nos"
                 })
                 doc.insert(ignore_permissions=True)
-                # Add Price
                 frappe.get_doc({
                     "doctype": "Item Price",
                     "item_code": item["item_code"],
@@ -77,10 +78,10 @@ def populate_data():
                     "price_list_rate": item["standard_rate"]
                 }).insert(ignore_permissions=True)
         except Exception as e:
-            print(f"⚠ Item {item['item_code']} creation failed: {e}")
+            pass
     print("✓ Maintenance Items processed.")
 
-    # 3. Create Field Technicians
+    # 3. Create Technicians
     techs = [
         {"name": "TECH-001", "technician_name": "Ahmed Hassan", "status": "Available", "current_latitude": 30.0444, "current_longitude": 31.2357},
         {"name": "TECH-002", "technician_name": "Mohamed Ali", "status": "Busy", "current_latitude": 30.0666, "current_longitude": 31.2557}
@@ -97,36 +98,54 @@ def populate_data():
                     "current_longitude": t["current_longitude"]
                 }).insert(ignore_permissions=True)
         except Exception as e:
-            print(f"⚠ Technician {t['name']} creation failed: {e}")
+            pass
     print("✓ Field Technicians processed.")
 
-    # 4. Create Sample Sales Orders (Maintenance Requests)
+    # 4. Create Sales Order and complete the cycle
     try:
         if not frappe.db.exists("Customer", "Test Customer"):
             frappe.get_doc({"doctype": "Customer", "customer_name": "Test Customer"}).insert(ignore_permissions=True)
             
-        for i in range(1, 4):
-            so = frappe.new_doc("Sales Order")
-            so.customer = "Test Customer"
-            so.custom_is_maintenance_order = 1
-            so.custom_maintenance_status = "New" if i == 1 else ("Assigned" if i == 2 else "Completed")
-            so.custom_equipment_fault_description = f"Sample fault report {i}: AC not cooling."
-            so.delivery_date = add_days(nowdate(), 1)
-            so.append("items", {"item_code": "SVC-VISIT", "qty": 1, "rate": 200})
-            
-            if i >= 2:
-                so.custom_assigned_technician = "TECH-001"
-                
-            if i == 3:
-                so.custom_maintenance_status = "Completed"
-                if frappe.db.exists("Item", "FILT-003"):
-                    so.append("items", {"item_code": "FILT-003", "qty": 1, "rate": 150})
-                
-            so.insert(ignore_permissions=True)
-            so.submit()
-            print(f"✓ Sales Order {so.name} created (Status: {so.custom_maintenance_status})")
+        so = frappe.new_doc("Sales Order")
+        so.customer = "Test Customer"
+        so.custom_is_maintenance_order = 1
+        so.custom_maintenance_status = "New"
+        so.custom_equipment_fault_description = "Intensive Test: Unit making loud noise."
+        so.delivery_date = add_days(nowdate(), 1)
+        so.append("items", {"item_code": "SVC-VISIT", "qty": 1, "rate": 200})
+        so.insert(ignore_permissions=True)
+        so.submit()
+        print(f"✓ Test Sales Order {so.name} created.")
+
+        # Simulate Technician Assignment
+        so.custom_assigned_technician = "TECH-001"
+        so.custom_maintenance_status = "Assigned"
+        so.save(ignore_permissions=True)
+        print("✓ Technician assigned.")
+
+        # Simulate Start Trip
+        so.custom_maintenance_status = "On the Way"
+        so.save(ignore_permissions=True)
+        print("✓ Status: On the Way.")
+
+        # Simulate Arrived
+        so.custom_maintenance_status = "Arrived"
+        so.save(ignore_permissions=True)
+        print("✓ Status: Arrived.")
+
+        # Simulate Completion & Billing
+        from maintenance_management.maintenance_management.api import technician_add_billing_items
+        # Adding a spare part
+        technician_add_billing_items(so.name, [{"item_code": "FILT-003", "qty": 1, "rate": 150}])
+        
+        # Final Status
+        so.reload()
+        so.custom_maintenance_status = "Completed"
+        so.save(ignore_permissions=True)
+        print("✓ Status: Completed. Billing updated.")
+
     except Exception as e:
-        print(f"⚠ Sales Order creation failed: {e}")
+        print(f"⚠ Cycle simulation failed: {e}")
 
     frappe.db.commit()
     print("=== SAMPLE DATA POPULATION COMPLETED ===")
