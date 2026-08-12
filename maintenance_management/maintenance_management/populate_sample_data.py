@@ -4,14 +4,19 @@ from frappe.utils import nowdate, add_days
 def populate_data():
     print("=== STARTING SAMPLE DATA POPULATION ===")
     
+    # 0. Ensure Dependencies Exist
+    item_groups = ["Compressors", "Filters", "Valves", "Services"]
+    for ig in item_groups:
+        if not frappe.db.exists("Item Group", ig):
+            frappe.get_doc({"doctype": "Item Group", "item_group_name": ig, "parent_item_group": "All Item Groups"}).insert(ignore_permissions=True)
+    
     # 1. Update Field Maintenance Settings
-    try:
-        if not frappe.db.exists("Field Maintenance Settings", "Field Maintenance Settings"):
-            doc = frappe.get_doc({"doctype": "Field Maintenance Settings"})
-            doc.insert(ignore_permissions=True)
-            frappe.db.commit()
+    if not frappe.db.exists("Field Maintenance Settings"):
+        frappe.get_doc({"doctype": "Field Maintenance Settings"}).insert(ignore_permissions=True)
+        frappe.db.commit()
         
-        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+    try:
+        settings = frappe.get_doc("Field Maintenance Settings")
         settings.enable_gps_tracking = 1
         settings.require_human_confirmation = 0
         settings.enable_price_approval = 1
@@ -78,7 +83,7 @@ def populate_data():
     # 3. Create Field Technicians
     techs = [
         {"name": "TECH-001", "technician_name": "Ahmed Hassan", "status": "Available", "current_latitude": 30.0444, "current_longitude": 31.2357},
-        {"name": "TECH-002", "technician_name": "Mohamed Ali", "status": "In Progress", "current_latitude": 30.0666, "current_longitude": 31.2557}
+        {"name": "TECH-002", "technician_name": "Mohamed Ali", "status": "Busy", "current_latitude": 30.0666, "current_longitude": 31.2557}
     ]
     for t in techs:
         try:
@@ -114,7 +119,8 @@ def populate_data():
                 
             if i == 3:
                 so.custom_maintenance_status = "Completed"
-                so.append("items", {"item_code": "FILT-003", "qty": 1, "rate": 150})
+                if frappe.db.exists("Item", "FILT-003"):
+                    so.append("items", {"item_code": "FILT-003", "qty": 1, "rate": 150})
                 
             so.insert(ignore_permissions=True)
             so.submit()
