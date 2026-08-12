@@ -1186,3 +1186,56 @@ def get_regional_profit_loss_summary():
         "total_expenses": sum(r["expenses_egp"] for r in regions),
         "regional_breakdown": regions
     }
+
+@frappe.whitelist(allow_guest=True)
+def iot_sensor_fault_webhook_with_nearest_dispatch(sensor_id, equipment_id, fault_code, reading_value, latitude=30.0444, longitude=31.2357):
+    """Receives IoT sensor telemetry, creates emergency service order, and automatically dispatches the nearest available technician using GPS coordinates."""
+    import math
+    
+    # Find all available technicians with GPS coordinates
+    technicians = frappe.get_all("Field Technician", filters={"status": "Available"}, fields=["name", "technician_name", "current_latitude", "current_longitude"])
+    
+    assigned_tech = None
+    min_distance = float('inf')
+    
+    for t in technicians:
+        t_lat = t.get("current_latitude") or 30.0444
+        t_lon = t.get("current_longitude") or 31.2357
+        
+        # Haversine formula calculation
+        lat1, lon1, lat2, lon2 = math.radians(float(latitude)), math.radians(float(longitude)), math.radians(float(t_lat)), math.radians(float(t_lon))
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+        c = 2 * math.asin(math.sqrt(a))
+        distance_km = 6371 * c # Earth radius in KM
+        
+        if distance_km < min_distance:
+            min_distance = distance_km
+            assigned_tech = t.name
+            
+    # Auto-create Sales Order
+    so = frappe.new_doc("Sales Order")
+    so.customer = "IoT Auto-Client"
+    so.custom_is_maintenance_order = 1
+    so.custom_maintenance_status = "Assigned"
+    so.custom_assigned_technician = assigned_tech or "TECH-001"
+    so.custom_equipment_fault_description = f"IoT EMERGENCY FAULT: Sensor {sensor_id}, Code {fault_code} (Val: {reading_value}). Nearest Tech {assigned_tech} dispatched ({round(min_distance, 2)} km away)."
+    so.delivery_date = frappe.utils.nowdate()
+    so.append("items", {
+        "item_code": "Emergency Service Visit",
+        "qty": 1,
+        "rate": 300.0
+    })
+    so.insert(ignore_permissions=True)
+    so.submit()
+    
+    frappe.logger().error(f"[IoT Dispatch] Emergency order {so.name} created and auto-assigned to nearest technician {assigned_tech} ({round(min_distance, 2)} km).")
+    
+    return {
+        "status": "success",
+        "emergency_order": so.name,
+        "nearest_technician": assigned_tech,
+        "distance_km": round(min_distance, 2),
+        "message": f"Emergency order {so.name} dispatched to nearest technician {assigned_tech} successfully."
+    }
