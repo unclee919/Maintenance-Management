@@ -901,3 +901,8 @@ def fix_workspaces():
 def update_technician_location(sales_order, latitude=None, longitude=None, tracking_status="active"):
     from maintenance_management.maintenance_management.controllers.sales_order import update_technician_location as utl
     return utl(sales_order, latitude, longitude, tracking_status)
+
+@frappe.whitelist()
+def test_gps_failover():
+    from maintenance_management.maintenance_management.controllers.sales_order import update_technician_location
+    return update_technician_location(sales_order="SAL-ORD-2026-00015", latitude=None, longitude=None, tracking_status="interrupted")
