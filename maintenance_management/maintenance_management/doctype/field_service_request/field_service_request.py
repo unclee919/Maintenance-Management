@@ -85,6 +85,7 @@ class FieldServiceRequest(Document):
 
     def process_erpnext_integration(self):
         try:
+            # 1. Create Stock Entry (Material Issue) for consumed parts
             if frappe.db.exists("DocType", "Stock Entry") and self.get("parts_consumed"):
                 se_items = []
                 for p in self.get("parts_consumed"):
@@ -98,15 +99,16 @@ class FieldServiceRequest(Document):
                     se = frappe.get_doc({
                         "doctype": "Stock Entry",
                         "stock_entry_type": "Material Issue",
-                        "custom_service_request": self.name,
+                        "remarks": f"Service Request: {self.name}",
                         "items": se_items
                     })
                     se.insert(ignore_permissions=True)
                     se.submit()
                     frappe.logger().info(f"Created Stock Entry {se.name} for Service Request {self.name}")
 
+            # 2. Create Sales Invoice in ERPNext
             if frappe.db.exists("DocType", "Sales Invoice") and self.total_amount and self.total_amount > 0:
-                existing_invoice = frappe.db.get_value("Sales Invoice", {"custom_service_request": self.name}, "name")
+                existing_invoice = frappe.db.get_value("Sales Invoice", {"remarks": ["like", f"%{self.name}%"]}, "name")
                 if not existing_invoice:
                     inv_items = []
                     for p in self.get("parts_consumed") or []:
@@ -127,7 +129,7 @@ class FieldServiceRequest(Document):
                     inv = frappe.get_doc({
                         "doctype": "Sales Invoice",
                         "customer": self.customer_name,
-                        "custom_service_request": self.name,
+                        "remarks": f"Service Request: {self.name}",
                         "items": inv_items
                     })
                     
@@ -163,7 +165,7 @@ class FieldServiceRequest(Document):
             suggested_parts.append({"item_code": "Drain Pipe Valve", "qty": 1, "rate": 25.0})
             est_cost = 80.0
         elif "noise" in desc or "motor" in desc:
-            suggested_parts.append({"item_code": "Fan Motor Bearing", "qty": 1, "rate": 75.0})
+            suggested_parts.append({"item_code": "Fan Motor Bearing", "Qty": 1, "rate": 75.0})
             est_cost = 200.0
         else:
             suggested_parts.append({"item_code": "General Diagnostic Kit", "qty": 1, "rate": 40.0})
