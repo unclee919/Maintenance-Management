@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from frappe.utils import nowdatetime, get_datetime
+from frappe.utils import now_datetime, get_datetime
 
 # Patch frappe.db.sql globally for this app to prevent is_billing_contact crash on older ERPNext schemas
 _orig_sql = frappe.db.sql
@@ -48,7 +48,7 @@ def auto_assign_tech(doc, method=None):
 
 def check_sla_escalations():
     try:
-        threshold = nowdatetime() - frappe.utils.timedelta(hours=48)
+        threshold = now_datetime() - frappe.utils.timedelta(hours=48)
         overdue_orders = frappe.get_all("Sales Order", 
             filters={
                 "maintenance_status": ["in", ["In Progress", "Waiting for Part"]],
@@ -65,7 +65,7 @@ def check_sla_escalations():
 
 def check_server_health():
     try:
-        recent_errors = frappe.db.count("Error Log", {"creation": [">", frappe.utils.add_hours(nowdatetime(), -24)]})
+        recent_errors = frappe.db.count("Error Log", {"creation": [">", frappe.utils.add_hours(now_datetime(), -24)]})
         if recent_errors > 25:
             frappe.log_error(title="Server Health Warning", message=f"High error count detected in last 24 hours: {recent_errors} errors logged.")
         frappe.db.commit()
