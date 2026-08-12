@@ -481,3 +481,74 @@ def send_automated_weekly_report():
         "total_revenue": total_revenue,
         "report": report_content
     }
+
+@frappe.whitelist()
+def technician_buy_spare_parts(technician, items):
+    """Allows a technician to purchase spare parts and update their van warehouse stock."""
+    import json
+    if isinstance(items, str):
+        items = json.loads(items)
+        
+    tech_doc = frappe.get_doc("Field Technician", technician)
+    warehouse = tech_doc.van_warehouse or "Stores - EM"
+    
+    # Create Material Receipt Stock Entry
+    se = frappe.new_doc("Stock Entry")
+    se.stock_entry_type = "Material Receipt"
+    se.to_warehouse = warehouse
+    
+    total_amount = 0
+    for item in items:
+        se.append("items", {
+            "item_code": item.get("item_code"),
+            "qty": float(item.get("qty", 1)),
+            "basic_rate": float(item.get("rate", 0)),
+            "t_warehouse": warehouse
+        })
+        total_amount += float(item.get("qty", 1)) * float(item.get("rate", 0))
+        
+    se.insert(ignore_permissions=True)
+    se.submit()
+    
+    return {
+        "status": "success",
+        "message": f"Successfully purchased spare parts into Van Warehouse {warehouse}",
+        "stock_entry": se.name,
+        "total_amount": total_amount
+    }
+
+@frappe.whitelist()
+def technician_transfer_spare_parts(from_technician, to_technician, items):
+    """Allows transferring spare parts between two technician van warehouses."""
+    import json
+    if isinstance(items, str):
+        items = json.loads(items)
+        
+    from_tech = frappe.get_doc("Field Technician", from_technician)
+    to_tech = frappe.get_doc("Field Technician", to_technician)
+    
+    from_warehouse = from_tech.van_warehouse or "Stores - EM"
+    to_warehouse = to_tech.van_warehouse or "Stores - EM"
+    
+    # Create Stock Transfer Stock Entry
+    se = frappe.new_doc("Stock Entry")
+    se.stock_entry_type = "Material Transfer"
+    se.from_warehouse = from_warehouse
+    se.to_warehouse = to_warehouse
+    
+    for item in items:
+        se.append("items", {
+            "item_code": item.get("item_code"),
+            "qty": float(item.get("qty", 1)),
+            "s_warehouse": from_warehouse,
+            "t_warehouse": to_warehouse
+        })
+        
+    se.insert(ignore_permissions=True)
+    se.submit()
+    
+    return {
+        "status": "success",
+        "message": f"Successfully transferred spare parts from {from_technician} ({from_warehouse}) to {to_technician} ({to_warehouse})",
+        "stock_entry": se.name
+    }
