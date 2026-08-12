@@ -2,12 +2,12 @@ import frappe
 
 @frappe.whitelist()
 def run():
-    for ws_name in ['Maintenance Management', 'Technician Dashboard']:
-        ws = frappe.get_doc('Workspace', ws_name)
-        print(f"--- {ws_name} ---")
-        print("Public:", ws.public)
-        print("Module:", ws.module)
-        print("Content:", ws.content)
-        print("Shortcuts:", [s.as_dict() for s in ws.get('shortcuts', [])])
-        print("Cards:", [c.as_dict() for c in ws.get('cards', [])])
-        print("Quick Lists:", [q.as_dict() for q in ws.get('quick_lists', [])])
+    ws = frappe.get_doc('Workspace', 'Build')
+    print("--- Build Workspace ---")
+    print("Content:", ws.content)
+    print("Links count:", len(ws.get('links', [])))
+    if ws.get('links'):
+        print("Sample link:", ws.links[0].as_dict())
+    print("Shortcuts count:", len(ws.get('shortcuts', [])))
+    if ws.get('shortcuts'):
+        print("Sample shortcut:", ws.shortcuts[0].as_dict())
