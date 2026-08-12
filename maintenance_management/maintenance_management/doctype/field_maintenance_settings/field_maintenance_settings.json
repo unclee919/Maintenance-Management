@@ -115,6 +115,18 @@
 		  },
 		  {
 		   "default": "1",
+		   "fieldname": "send_weekly_report_to_whatsapp",
+		   "fieldtype": "Check",
+		   "label": "Send Weekly Report to WhatsApp Group"
+		  },
+		  {
+		   "fieldname": "whatsapp_report_group_id",
+		   "fieldtype": "Data",
+		   "label": "WhatsApp Group ID / Number for Reports",
+		   "default": "maintenance_managers_group"
+		  },
+		  {
+		   "default": "1",
 		   "fieldname": "enable_online_payment_link",
 		   "fieldtype": "Check",
 		   "label": "Include Online Payment Link in WhatsApp Billing"
