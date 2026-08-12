@@ -1,0 +1,8 @@
+{
+ "doctype": "Calendar View",
+ "subject_field": "appointment_id",
+ "start_date_field": "scheduled_date",
+ "end_date_field": "scheduled_date",
+ "all_day": 0,
+ "color": "#3182CE"
+}

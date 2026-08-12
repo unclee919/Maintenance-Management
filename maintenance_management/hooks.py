@@ -19,7 +19,8 @@ doc_events = {
 
 scheduler_events = {
     "daily": [
-        "maintenance_management.controllers.sales_order.check_sla_escalations"
+        "maintenance_management.controllers.sales_order.check_sla_escalations",
+        "maintenance_management.maintenance_management.doctype.amc_contract.amc_contract.generate_amc_service_requests"
     ],
     "hourly": [
         "maintenance_management.controllers.sales_order.check_server_health"

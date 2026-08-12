@@ -1,0 +1,160 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-12 16:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_name",
+  "customer",
+  "status",
+  "column_break_1",
+  "start_date",
+  "end_date",
+  "billing_frequency",
+  "section_break_visits",
+  "visits_per_year",
+  "last_generated_date",
+  "next_service_date",
+  "column_break_2",
+  "service_type",
+  "assigned_technician",
+  "section_break_notes",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contract Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nActive\nExpired\nCancelled"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "End Date",
+   "reqd": 1
+  },
+  {
+   "default": "Monthly",
+   "fieldname": "billing_frequency",
+   "fieldtype": "Select",
+   "label": "Billing Frequency",
+   "options": "Monthly\nQuarterly\nSemi-Annually\nAnnually"
+  },
+  {
+   "fieldname": "section_break_visits",
+   "fieldtype": "Section Break",
+   "label": "Recurring Service Schedule"
+  },
+  {
+   "default": "12",
+   "fieldname": "visits_per_year",
+   "fieldtype": "Int",
+   "label": "Visits Per Year"
+  },
+  {
+   "fieldname": "last_generated_date",
+   "fieldtype": "Date",
+   "label": "Last Generated Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "next_service_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Next Service Date"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "service_type",
+   "fieldtype": "Link",
+   "label": "Service Type",
+   "options": "Service Type"
+  },
+  {
+   "fieldname": "assigned_technician",
+   "fieldtype": "Link",
+   "label": "Default Technician",
+   "options": "Field Technician"
+  },
+  {
+   "fieldname": "section_break_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Contract Terms & Description"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-08-12 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Maintenance Management",
+ "name": "AMC Contract",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Maintenance Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "next_service_date",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1
+}
