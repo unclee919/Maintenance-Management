@@ -74,7 +74,7 @@
  "links": [],
  "modified": "2026-08-12 00:00:00.000000",
  "modified_by": "Administrator",
- "module": "maintenance_management",
+ "module": "Custom",
  "name": "Field Maintenance Settings",
  "owner": "Administrator",
  "permissions": [
