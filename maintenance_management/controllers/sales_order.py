@@ -56,7 +56,8 @@ def on_update(doc, method):
         trigger_webhook(doc, f"Status Changed to {doc.maintenance_status}")
 
         if doc.maintenance_status == "Completed":
-            process_erpnext_integration(doc)
+            # process_erpnext_integration(doc)
+            pass
 
 def auto_assign_tech(doc):
     tech = frappe.db.get_value("Field Technician", {"status": "Available"}, "name")
