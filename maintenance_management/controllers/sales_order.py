@@ -152,3 +152,7 @@ def on_update(doc, method=None):
     if doc.maintenance_status == "Assigned" and not doc.get("assigned_technicians"):
         auto_assign_tech(doc)
     process_erpnext_integration(doc)
+
+def after_insert(doc, method=None):
+    if doc.maintenance_status == "New" and not doc.get("assigned_technicians"):
+        auto_assign_tech(doc)
