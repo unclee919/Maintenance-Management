@@ -224,3 +224,51 @@ def whatsapp_webhook_receiver(phone=None, message=None, customer_name=None, equi
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "WhatsApp Webhook Error")
         return {"status": "error", "message": str(e)}
+
+@frappe.whitelist()
+def send_whatsapp_notification(phone, message):
+    """Simulates sending a WhatsApp notification via WhatsApp Business API (can be configured via Field Maintenance Settings)."""
+    settings = frappe.get_single("Field Maintenance Settings")
+    enabled = settings.get("enable_whatsapp_notifications")
+    
+    frappe.logger().info(f"[WhatsApp Notification] To: {phone} | Message: {message} | Enabled: {enabled}")
+    
+    # Store notification log
+    frappe.get_doc({
+        "doctype": "Comment",
+        "comment_type": "Info",
+        "reference_doctype": "Sales Order",
+        "content": f"WhatsApp Notification sent to {phone}: {message}"
+    }).insert(ignore_permissions=True)
+    
+    return {"status": "success", "message": "Notification sent successfully"}
+
+@frappe.whitelist(allow_guest=True)
+def get_expiring_tracking_link(sales_order):
+    """Generates an expiring Google Maps tracking link for the customer. Expires automatically upon arrival or completion."""
+    doc = frappe.get_doc("Sales Order", sales_order)
+    status = doc.get("custom_maintenance_status")
+    
+    if status in ["Completed", "Cancelled", "Arrived"]:
+        return {
+            "status": "expired",
+            "message": "This tracking link has expired because the service visit has been completed or the technician has arrived."
+        }
+        
+    tech = doc.get("custom_assigned_technician")
+    lat, lon = 30.0444, 31.2357 # Default Cairo coordinates or technician current coords
+    if tech:
+        t_doc = frappe.get_doc("Field Technician", tech)
+        lat = t_doc.get("current_latitude") or lat
+        lon = t_doc.get("current_longitude") or lon
+        
+    maps_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+    
+    return {
+        "status": "active",
+        "maps_url": maps_url,
+        "latitude": lat,
+        "longitude": lon,
+        "technician": tech,
+        "message": "Tracking link is active."
+    }
