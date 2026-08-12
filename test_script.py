@@ -1,6 +1,9 @@
 import traceback
 import frappe
 
+frappe.init("erp.elmrkz.cloud")
+frappe.connect()
+
 try:
     doc = frappe.get_doc({
         "doctype": "Field Service Request",
@@ -34,3 +37,5 @@ try:
     
 except Exception:
     traceback.print_exc()
+finally:
+    frappe.destroy()
