@@ -1,6 +1,7 @@
 [
  {
   "doctype": "Custom Field",
+  "name": "Sales Order-equipment_type",
   "dt": "Sales Order",
   "fieldname": "equipment_type",
   "fieldtype": "Data",
@@ -10,6 +11,7 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Order-issue_description",
   "dt": "Sales Order",
   "fieldname": "issue_description",
   "fieldtype": "Text",
@@ -19,6 +21,7 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Order-maintenance_status",
   "dt": "Sales Order",
   "fieldname": "maintenance_status",
   "fieldtype": "Select",
@@ -30,6 +33,7 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Order-technician",
   "dt": "Sales Order",
   "fieldname": "technician",
   "fieldtype": "Link",
@@ -40,6 +44,7 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Order-scheduled_date_time",
   "dt": "Sales Order",
   "fieldname": "scheduled_date_time",
   "fieldtype": "Datetime",
@@ -49,6 +54,7 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Invoice-feedback_score",
   "dt": "Sales Invoice",
   "fieldname": "feedback_score",
   "fieldtype": "Select",
@@ -59,6 +65,7 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Invoice-customer_feedback",
   "dt": "Sales Invoice",
   "fieldname": "customer_feedback",
   "fieldtype": "Small Text",
