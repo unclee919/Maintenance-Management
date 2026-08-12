@@ -90,13 +90,42 @@
 	   "fieldtype": "Int",
 	   "label": "Response Time Alert Threshold (Mins)"
 	  },
-	  {
-	   "default": "manager@elmrkz.cloud",
-	   "fieldname": "alert_email_recipients",
-	   "fieldtype": "Data",
-	   "label": "Alert Email Recipients"
-	  }
-	 ],
+		  {
+		   "default": "manager@elmrkz.cloud",
+		   "fieldname": "alert_email_recipients",
+		   "fieldtype": "Data",
+		   "label": "Alert Email Recipients"
+		  },
+		  {
+		   "fieldname": "weekly_report_section",
+		   "fieldtype": "Section Break",
+		   "label": "Automated Weekly Report & Payment Gateway Configuration"
+		  },
+		  {
+		   "default": "1",
+		   "fieldname": "enable_weekly_report",
+		   "fieldtype": "Check",
+		   "label": "Enable Automated Weekly Performance Report"
+		  },
+		  {
+		   "fieldname": "weekly_report_email",
+		   "fieldtype": "Data",
+		   "label": "Weekly Report Recipient Email",
+		   "default": "manager@elmrkz.cloud"
+		  },
+		  {
+		   "default": "1",
+		   "fieldname": "enable_online_payment_link",
+		   "fieldtype": "Check",
+		   "label": "Include Online Payment Link in WhatsApp Billing"
+		  },
+		  {
+		   "fieldname": "payment_gateway_url",
+		   "fieldtype": "Data",
+		   "label": "Payment Gateway Base URL (Paymob / Vodafone Cash)",
+		   "default": "https://pay.elmrkz.cloud/pay"
+		  }
+		 ],
  "icon": "octicon octicon-settings",
  "idx": 1,
  "is_single": 1,
