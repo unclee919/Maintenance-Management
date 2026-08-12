@@ -39,6 +39,16 @@ frappe.pages['technician-tracking'].on_page_load = function(wrapper) {
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white"><strong>⏱️ Daily Technician Utilization & Efficiency Summary</strong></div>
+                        <div class="card-body" id="utilization-container">
+                            <p>Loading technician utilization metrics...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card">
                 <div class="card-header bg-secondary text-white"><strong>🗺️ Live Map Overlay, Technician Routes & Geofence Boundaries (Cairo / Giza)</strong></div>
                 <div class="card-body" style="background: #ffffff;">
@@ -161,3 +171,33 @@ function test_geofence_simulation() {
 
 // Call load_forecast inside load_tracking_data or on page load
 setTimeout(load_forecast, 1000);
+
+
+function load_utilization() {
+    frappe.call({
+        method: "maintenance_management.maintenance_management.api.get_technician_utilization_summary",
+        callback: function(r) {
+            if (r && r.message && r.message.technicians) {
+                let techs = r.message.technicians;
+                let html = `<table class="table table-bordered table-striped">
+                    <thead><tr><th>Technician Name ID</th><th>Current Status</th><th>Orders Handled</th><th>Active Working Hours</th><th>Utilization Rate</th></tr></thead>
+                    <tbody>`;
+                techs.forEach(t => {
+                    let badge = t.status === 'Available' ? 'badge-success' : 'badge-warning';
+                    let utilColor = t.utilization_percentage >= 80 ? 'text-success' : 'text-primary';
+                    html += `<tr>
+                        <td><strong>${t.technician}</strong> (${t.id})</td>
+                        <td><span class="badge ${badge} p-2">${t.status}</span></td>
+                        <td>${t.orders_handled}</td>
+                        <td>${t.active_hours} Hrs</td>
+                        <td><strong class="${utilColor}">${t.utilization_percentage}%</strong></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                $('#utilization-container').html(html);
+            }
+        }
+    });
+}
+
+setTimeout(load_utilization, 1200);
