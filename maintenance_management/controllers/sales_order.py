@@ -7,8 +7,10 @@ def _ensure_sql_patch():
         if not getattr(frappe.db, "_is_patched", False):
             _orig_sql = frappe.db.sql
             def _patched_sql(query, *args, **kwargs):
-                if query and "is_billing_contact" in str(query):
-                    return []
+                query_str = str(query)
+                if "is_billing_contact" in query_str:
+                    # Return empty result set so ERPNext contact lookup skips gracefully
+                    return ()
                 return _orig_sql(query, *args, **kwargs)
             frappe.db.sql = _patched_sql
             frappe.db._is_patched = True
