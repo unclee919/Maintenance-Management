@@ -19,7 +19,10 @@
   "parts_consumed",
   "totals_section",
   "total_amount",
-  "warranty_status"
+  "warranty_status",
+  "feedback_section",
+  "feedback_score",
+  "customer_feedback"
  ],
  "fields": [
   {
@@ -104,6 +107,22 @@
    "fieldtype": "Select",
    "label": "Warranty Status",
    "options": "Active\nExpired\nOut of Scope"
+  },
+  {
+   "fieldname": "feedback_section",
+   "fieldtype": "Section Break",
+   "label": "Customer Feedback"
+  },
+  {
+   "fieldname": "feedback_score",
+   "fieldtype": "Select",
+   "label": "Feedback Score",
+   "options": "5 - Excellent\n4 - Very Good\n3 - Good\n2 - Fair\n1 - Poor"
+  },
+  {
+   "fieldname": "customer_feedback",
+   "fieldtype": "Small Text",
+   "label": "Customer Comments / Review"
   }
  ],
  "icon": "octicon octicon-tools",

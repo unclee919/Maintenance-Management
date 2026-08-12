@@ -16,6 +16,29 @@ class FieldServiceRequest(Document):
         if total > 0 and not self.total_amount:
             self.total_amount = total
 
+        # Enforce strict status transition security
+        if not self.is_new():
+            old_status = frappe.db.get_value("Field Service Request", self.name, "status")
+            if old_status and old_status != self.status:
+                # If user is System Manager, allow flexibility, otherwise validate workflow
+                roles = frappe.get_roles()
+                if "System Manager" not in roles and "Administrator" not in roles:
+                    valid_transitions = {
+                        "New": ["Pending Correction", "Pending Confirmation", "Assigned", "Cancelled"],
+                        "Pending Correction": ["New", "Pending Confirmation", "Cancelled"],
+                        "Pending Confirmation": ["New", "Assigned", "Cancelled"],
+                        "Assigned": ["Accepted", "Cancelled"],
+                        "Accepted": ["In Progress", "Cancelled"],
+                        "In Progress": ["Waiting for Part", "Waiting for Price Approval", "Completed", "Cancelled"],
+                        "Waiting for Part": ["In Progress", "Completed", "Cancelled"],
+                        "Waiting for Price Approval": ["In Progress", "Completed", "Cancelled"],
+                        "Completed": [],
+                        "Cancelled": []
+                    }
+                    allowed = valid_transitions.get(old_status, [])
+                    if self.status not in allowed:
+                        frappe.throw(f"Invalid status transition from '{old_status}' to '{self.status}'. Allowed transitions: {', '.join(allowed) or 'None'}")
+
     def before_save(self):
         try:
             settings = frappe.get_single("Field Maintenance Settings")
@@ -77,7 +100,9 @@ class FieldServiceRequest(Document):
                     "status": self.status,
                     "equipment_type": self.equipment_type,
                     "technician": self.technician,
-                    "total_amount": self.total_amount
+                    "total_amount": self.total_amount,
+                    "feedback_score": self.feedback_score,
+                    "customer_feedback": self.customer_feedback
                 }
                 requests.post(webhook_url, json=payload, timeout=5)
         except Exception as e:
@@ -85,7 +110,13 @@ class FieldServiceRequest(Document):
 
     def process_erpnext_integration(self):
         try:
+            # Determine warehouse: check technician assigned warehouse first
             warehouse = "Stores - EM"
+            if self.technician:
+                tech_wh = frappe.db.get_value("Field Technician", self.technician, "warehouse")
+                if tech_wh and frappe.db.exists("Warehouse", tech_wh):
+                    warehouse = tech_wh
+
             if not frappe.db.exists("Warehouse", warehouse):
                 wh = frappe.db.get_value("Warehouse", {"is_group": 0}, "name")
                 if wh:
@@ -127,12 +158,12 @@ class FieldServiceRequest(Document):
                         "doctype": "Stock Entry",
                         "stock_entry_type": "Material Issue",
                         "allow_zero_valuation_rate": 1,
-                        "remarks": f"Service Request: {self.name}",
+                        "remarks": f"Service Request: {self.name} (Warehouse: {warehouse})",
                         "items": se_items
                     })
                     se.insert(ignore_permissions=True)
                     se.submit()
-                    frappe.logger().info(f"Created Stock Entry {se.name} for Service Request {self.name}")
+                    frappe.logger().info(f"Created Stock Entry {se.name} for Service Request {self.name} using warehouse {warehouse}")
 
             if frappe.db.exists("DocType", "Sales Invoice") and self.total_amount and self.total_amount > 0:
                 existing_invoice = frappe.db.get_value("Sales Invoice", {"remarks": ["like", f"%{self.name}%"]}, "name")

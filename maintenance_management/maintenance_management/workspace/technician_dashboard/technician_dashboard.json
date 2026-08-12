@@ -1,0 +1,57 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"heading\", \"type\": \"Header\", \"data\": {\"text\": \"Technician Mobile Dashboard\", \"level\": 2}}, {\"id\": \"shortcut_fsr\", \"type\": \"Shortcut\", \"data\": {\"shortcut_name\": \"Assigned Service Requests\"}}]",
+ "creation": "2026-08-12 00:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "tool",
+ "idx": 1,
+ "is_standard": 1,
+ "label": "Technician Dashboard",
+ "links": [
+  {
+   "hidden": 0,
+   "is_quick_entry": 0,
+   "label": "Assigned Service Requests",
+   "link_count": 0,
+   "link_type": "DocType",
+   "link_to": "Field Service Request",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_quick_entry": 0,
+   "label": "Field Technicians",
+   "link_count": 0,
+   "link_type": "DocType",
+   "link_to": "Field Technician",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Maintenance Management",
+ "name": "Technician Dashboard",
+ "owner": "Administrator",
+ "public": 1,
+ "roles": [],
+ "sequence_id": 1,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "icon": "tool",
+   "is_query_report": 0,
+   "label": "Assigned Service Requests",
+   "link_to": "Field Service Request",
+   "stats_filter": "{\"status\": [\"in\", [\"Assigned\", \"Accepted\", \"In Progress\"]]}",
+   "type": "DocType"
+  }
+ ],
+ "title": "Technician Dashboard"
+}
