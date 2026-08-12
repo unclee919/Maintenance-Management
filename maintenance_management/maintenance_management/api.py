@@ -906,3 +906,86 @@ def update_technician_location(sales_order, latitude=None, longitude=None, track
 def test_gps_failover():
     from maintenance_management.maintenance_management.controllers.sales_order import update_technician_location
     return update_technician_location(sales_order="SAL-ORD-2026-00015", latitude=None, longitude=None, tracking_status="interrupted")
+
+@frappe.whitelist()
+def enhance_workspaces():
+    import json
+    # 1. Create Number Cards if not exist
+    cards = [
+        {"name": "Active Service Orders Count", "label": "Active Service Orders", "function": "Count", "document_type": "Sales Order", "filters": '[["Sales Order", "status", "!=", "Completed"]]'},
+        {"name": "Pending Invoices Count", "label": "Pending Invoices", "function": "Count", "document_type": "Sales Invoice", "filters": '[["Sales Invoice", "status", "=", "Unpaid"]]'},
+        {"name": "Available Technicians", "label": "Available Technicians", "function": "Count", "document_type": "Field Technician", "filters": '[["Field Technician", "status", "=", "Available"]]'},
+        {"name": "Total Maintenance Revenue", "label": "Maintenance Revenue", "function": "Sum", "aggregate_function_based_on": "grand_total", "document_type": "Sales Invoice"}
+    ]
+    
+    for c in cards:
+        if not frappe.db.exists("Number Card", c["name"]):
+            doc = frappe.get_doc({
+                "doctype": "Number Card",
+                "name": c["name"],
+                "label": c["label"],
+                "type": "Document Type",
+                "document_type": c["document_type"],
+                "function": c["function"],
+                "aggregate_function_based_on": c.get("aggregate_function_based_on"),
+                "filters_json": c.get("filters", "[]"),
+                "is_standard": 0,
+                "module": "Maintenance Management"
+            })
+            doc.insert(ignore_permissions=True)
+            
+    # 2. Create Charts if not exist
+    if not frappe.db.exists("Dashboard Chart", "Orders by Status"):
+        chart = frappe.get_doc({
+            "doctype": "Dashboard Chart",
+            "chart_name": "Orders by Status",
+            "chart_type": "Group By",
+            "document_type": "Sales Order",
+            "group_by_based_on": "status",
+            "group_by_type": "Count",
+            "is_standard": 0,
+            "module": "Maintenance Management",
+            "time_interval": "Monthly",
+            "timeseries": 0,
+            "type": "Donut"
+        })
+        chart.insert(ignore_permissions=True)
+
+    # 3. Update Maintenance Management Workspace Content
+    if frappe.db.exists("Workspace", "Maintenance Management"):
+        ws = frappe.get_doc("Workspace", "Maintenance Management")
+        ws.content = json.dumps([
+            {"type": "header", "data": {"text": "📊 Maintenance Management Operations & Executive Summary", "col": 12}},
+            {"type": "spacer", "data": {"col": 12}},
+            {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 4}},
+            {"type": "card", "data": {"card_name": "Pending Invoices Count", "col": 4}},
+            {"type": "card", "data": {"card_name": "Available Technicians", "col": 4}},
+            {"type": "spacer", "data": {"col": 12}},
+            {"type": "chart", "data": {"chart_name": "Orders by Status", "col": 12}},
+            {"type": "spacer", "data": {"col": 12}},
+            {"type": "header", "data": {"text": "⚡ Quick Links & Management Modules", "col": 12}},
+            {"type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 3}},
+            {"type": "shortcut", "data": {"shortcut_name": "Field Technician", "col": 3}},
+            {"type": "shortcut", "data": {"shortcut_name": "Field Service Request", "col": 3}},
+            {"type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 3}},
+        ])
+        ws.save(ignore_permissions=True)
+
+    # 4. Update Technician Dashboard Workspace Content
+    if frappe.db.exists("Workspace", "Technician Dashboard"):
+        ws_tech = frappe.get_doc("Workspace", "Technician Dashboard")
+        ws_tech.content = json.dumps([
+            {"type": "header", "data": {"text": "🛠️ Technician Field Operations & Portal", "col": 12}},
+            {"type": "spacer", "data": {"col": 12}},
+            {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 6}},
+            {"type": "card", "data": {"card_name": "Available Technicians", "col": 6}},
+            {"type": "spacer", "data": {"col": 12}},
+            {"type": "header", "data": {"text": "🚀 Field Action Shortcuts", "col": 12}},
+            {"type": "shortcut", "data": {"shortcut_name": "Active Service Orders", "col": 4}},
+            {"type": "shortcut", "data": {"shortcut_name": "Van Warehouse", "col": 4}},
+            {"type": "shortcut", "data": {"shortcut_name": "Field Technician Profile", "col": 4}},
+        ])
+        ws_tech.save(ignore_permissions=True)
+
+    frappe.db.commit()
+    return "Success"
