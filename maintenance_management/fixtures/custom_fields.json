@@ -53,6 +53,27 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Order-is_warranty_claim",
+  "dt": "Sales Order",
+  "fieldname": "is_warranty_claim",
+  "fieldtype": "Check",
+  "insert_after": "assigned_technicians",
+  "label": "Is Warranty Claim",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-original_order_ref",
+  "dt": "Sales Order",
+  "fieldname": "original_order_ref",
+  "fieldtype": "Link",
+  "options": "Sales Order",
+  "insert_after": "is_warranty_claim",
+  "label": "Original Order Reference",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
   "name": "Field Maintenance Settings-assignment_criteria",
   "dt": "Field Maintenance Settings",
   "fieldname": "assignment_criteria",
@@ -65,13 +86,13 @@
  },
  {
   "doctype": "Custom Field",
-  "name": "Field Maintenance Settings-default_service_item",
+  "name": "Field Maintenance Settings-enable_health_check",
   "dt": "Field Maintenance Settings",
-  "fieldname": "default_service_item",
-  "fieldtype": "Link",
-  "options": "Item",
+  "fieldname": "enable_health_check",
+  "fieldtype": "Check",
   "insert_after": "assignment_criteria",
-  "label": "Default Service Item",
+  "label": "Enable Automated Health Check & Monitoring",
+  "default": 1,
   "module": "Maintenance Management"
  }
 ]

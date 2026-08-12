@@ -39,6 +39,12 @@ def validate(doc, method):
         else:
             doc.sla_status = "On Time"
 
+    # If warranty claim, zero out or adjust item rates if configured
+    if doc.get("is_warranty_claim") and doc.get("original_order_ref"):
+        for item in doc.get("items", []):
+            item.rate = 0.0
+            item.amount = 0.0
+
 def before_save(doc, method):
     try:
         settings = frappe.get_single("Field Maintenance Settings")
@@ -78,7 +84,7 @@ def auto_assign_tech(doc):
         criteria = "Skill Based"
 
     techs = []
-    if criteria == "Skill Based" and doc.equipment_type:
+    if criteria == "Skill Based" and doc.get("equipment_type"):
         techs = frappe.get_all("Field Technician", filters={"status": "Available", "specialty_equipment": ["like", f"%{doc.equipment_type}%"]}, limit=2)
     
     if not techs:
@@ -98,9 +104,9 @@ def trigger_webhook(doc, event_type):
                 "sales_order": doc.name,
                 "customer": doc.customer,
                 "status": doc.maintenance_status,
-                "equipment_type": doc.equipment_type,
+                "equipment_type": doc.get("equipment_type"),
                 "equipment_serial_no": doc.get("equipment_serial_no"),
-                "assigned_technicians": doc.assigned_technicians,
+                "assigned_technicians": doc.get("assigned_technicians"),
                 "grand_total": doc.grand_total,
                 "sla_status": doc.get("sla_status")
             }
@@ -111,7 +117,7 @@ def trigger_webhook(doc, event_type):
 def process_erpnext_integration(doc):
     try:
         warehouse = "Stores - EM"
-        if doc.assigned_technicians:
+        if doc.get("assigned_technicians"):
             first_tech = doc.assigned_technicians.split(",")[0].strip()
             tech_wh = frappe.db.get_value("Field Technician", first_tech, "warehouse")
             if tech_wh and frappe.db.exists("Warehouse", tech_wh):
@@ -214,3 +220,19 @@ def check_sla_escalations():
         frappe.db.commit()
     except Exception as e:
         frappe.log_error(f"SLA Check Error: {str(e)}", "Maintenance SLA Error")
+
+def check_server_health():
+    """Automated server health check and error monitoring background job"""
+    try:
+        settings = frappe.get_single("Field Maintenance Settings")
+        if not settings.get("enable_health_check", 1):
+            return
+
+        # Check database connectivity & recent error logs count
+        recent_errors = frappe.db.count("Error Log", {"creation": [">", frappe.utils.add_hours(frappe.utils.now_datetime(), -24)]})
+        if recent_errors > 25:
+            frappe.log_error(f"High error count detected in past 24 hours: {recent_errors} errors.", "Server Health Warning")
+        
+        frappe.db.commit()
+    except Exception as e:
+        frappe.log_error(f"Server Health Check Error: {str(e)}", "Health Monitoring Failure")

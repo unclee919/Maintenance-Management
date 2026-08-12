@@ -20,5 +20,10 @@ doc_events = {
 scheduler_events = {
     "daily": [
         "maintenance_management.controllers.sales_order.check_sla_escalations"
+    ],
+    "hourly": [
+        "maintenance_management.controllers.sales_order.check_server_health"
     ]
 }
+
+app_include_css = "/assets/maintenance_management/css/mobile_enhancements.css"
