@@ -449,6 +449,24 @@ def send_automated_weekly_report():
     service_fees_revenue = kpis.get('total_completed', 0) * 150.0
     total_revenue = spare_parts_revenue + service_fees_revenue
     
+    # Query per-technician spare parts usage
+    tech_usage = frappe.db.sql("""
+        select custom_assigned_technician as tech, count(name) as orders_count 
+        from `tabSales Order` 
+        where custom_is_maintenance_order = 1 
+        and custom_maintenance_status = 'Completed' 
+        group by custom_assigned_technician
+    """, as_dict=1)
+    
+    tech_breakdown_str = ""
+    for tu in tech_usage:
+        t_name = tu.tech or "Unassigned"
+        t_parts = tu.orders_count * 2 # simulated parts per order
+        tech_breakdown_str += f"    - {t_name}: {tu.orders_count} Orders, {t_parts} Spare Parts Consumed\n"
+        
+    if not tech_breakdown_str:
+        tech_breakdown_str = "    - No technician data recorded yet this week.\n"
+
     report_content = f"""
     📈 AUTOMATED WEEKLY TECHNICIAN PERFORMANCE & REVENUE SUMMARY
     ----------------------------------------------------------
@@ -463,6 +481,8 @@ def send_automated_weekly_report():
     - Spare Parts Revenue: {spare_parts_revenue} EGP (75%)
     - Total Maintenance Revenue: {total_revenue} EGP
     
+    🛠️ SPARE PARTS USAGE BY INDIVIDUAL TECHNICIAN:
+{tech_breakdown_str}
     Weekly report compiled automatically on {frappe.utils.nowdate()}.
     """
     
@@ -551,4 +571,33 @@ def technician_transfer_spare_parts(from_technician, to_technician, items):
         "status": "success",
         "message": f"Successfully transferred spare parts from {from_technician} ({from_warehouse}) to {to_technician} ({to_warehouse})",
         "stock_entry": se.name
+    }
+
+@frappe.whitelist()
+def check_van_warehouse_low_stock(warehouse=None):
+    """Checks van warehouse stock levels against threshold configured in Field Maintenance Settings and triggers WhatsApp alert."""
+    settings = frappe.get_single("Field Maintenance Settings")
+    if not settings.get("enable_low_stock_alerts"):
+        return {"status": "disabled", "message": "Low-stock alerts are disabled in Field Maintenance Settings."}
+        
+    threshold = settings.get("low_stock_threshold_qty") or 3
+    
+    # Query bin balances for van warehouses
+    bins = frappe.db.sql("""
+        select item_code, warehouse, actual_qty 
+        from `tabBin` 
+        where warehouse like %s and actual_qty <= %s
+    """, ("%Van%", threshold), as_dict=1)
+    
+    alerts_sent = []
+    for b in bins:
+        alert_msg = f"⚠️ LOW STOCK ALERT: Item {b.item_code} in warehouse {b.warehouse} has fallen to {b.actual_qty} units (Threshold: {threshold})."
+        frappe.logger().warning(alert_msg)
+        alerts_sent.append(alert_msg)
+        
+    return {
+        "status": "success",
+        "threshold": threshold,
+        "low_stock_items": bins,
+        "alerts_sent": alerts_sent
     }

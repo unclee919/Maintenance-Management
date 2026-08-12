@@ -131,13 +131,30 @@
 		   "fieldtype": "Check",
 		   "label": "Include Online Payment Link in WhatsApp Billing"
 		  },
-		  {
-		   "fieldname": "payment_gateway_url",
-		   "fieldtype": "Data",
-		   "label": "Payment Gateway Base URL (Paymob / Vodafone Cash)",
-		   "default": "https://pay.elmrkz.cloud/pay"
-		  }
-		 ],
+			  {
+			   "fieldname": "payment_gateway_url",
+			   "fieldtype": "Data",
+			   "label": "Payment Gateway Base URL (Paymob / Vodafone Cash)",
+			   "default": "https://pay.elmrkz.cloud/pay"
+			  },
+			  {
+			   "fieldname": "inventory_section",
+			   "fieldtype": "Section Break",
+			   "label": "Van Warehouse Low-Stock Alert Configuration"
+			  },
+			  {
+			   "default": "1",
+			   "fieldname": "enable_low_stock_alerts",
+			   "fieldtype": "Check",
+			   "label": "Enable Van Warehouse Low-Stock WhatsApp Alerts"
+			  },
+			  {
+			   "default": "3",
+			   "fieldname": "low_stock_threshold_qty",
+			   "fieldtype": "Int",
+			   "label": "Low-Stock Alert Threshold Quantity"
+			  }
+			 ],
  "icon": "octicon octicon-settings",
  "idx": 1,
  "is_single": 1,
