@@ -12,8 +12,7 @@ def run():
     # 1. Maintenance Management Workspace
     ws = frappe.get_doc('Workspace', 'Maintenance Management')
     ws.set('shortcuts', [])
-    ws.set('cards', [])
-    ws.set('quick_lists', [])
+    ws.set('links', [])
     
     content = [
         {"id": random_string(), "type": "header", "data": {"text": "Field Maintenance Operations & Analytics", "level": 2}},
@@ -44,20 +43,12 @@ def run():
             'color': 'Grey'
         })
         
-    cards_data = ["Open Maintenance Orders", "SLA Breached / Escalated Orders", "Average Customer Rating"]
-    for c in cards_data:
-        ws.append('cards', {
-            'card_name': c,
-            'label': c
-        })
-        
     ws.save(ignore_permissions=True)
     
     # 2. Technician Dashboard Workspace
     ws_tech = frappe.get_doc('Workspace', 'Technician Dashboard')
     ws_tech.set('shortcuts', [])
-    ws_tech.set('cards', [])
-    ws_tech.set('quick_lists', [])
+    ws_tech.set('links', [])
     
     content_tech = [
         {"id": random_string(), "type": "header", "data": {"text": "Technician Portal & Field Operations", "level": 2}},
@@ -87,4 +78,4 @@ def run():
     
     frappe.db.commit()
     frappe.clear_cache()
-    print("Workspaces successfully populated with full analytics and shortcuts.")
+    print("Workspaces successfully populated with content blocks.")
