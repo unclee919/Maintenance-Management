@@ -97,34 +97,21 @@ def process_erpnext_integration(doc):
         # Create Stock Entry (Material Issue) for items consumed in Sales Order
         if frappe.db.exists("DocType", "Stock Entry") and doc.get("items"):
             try:
-                se_items = []
+                se = frappe.new_doc("Stock Entry")
+                se.stock_entry_type = "Material Issue"
+                se.purpose = "Material Issue"
                 for item in doc.get("items"):
-                    se_items.append({
+                    se.append("items", {
                         "item_code": item.item_code,
                         "qty": item.qty,
                         "basic_rate": item.rate,
                         "valuation_rate": item.rate,
                         "allow_zero_valuation_rate": 1,
-                        "s_warehouse": warehouse,
-                        "t_warehouse": ""
+                        "s_warehouse": warehouse
                     })
-                if se_items:
-                    try:
-                        se = frappe.get_doc({
-                            "doctype": "Stock Entry",
-                            "stock_entry_type": "Material Issue",
-                            "allow_zero_valuation_rate": 1,
-                            "remarks": f"Sales Order Maintenance Service: {doc.name} (Warehouse: {warehouse})",
-                            "items": se_items
-                        })
-                        se.insert(ignore_permissions=True)
-                        se.submit()
-                        frappe.logger().info(f"Created Stock Entry {se.name} for Sales Order {doc.name}")
-                    except Exception as inner_se:
-                        import traceback
-                        err_trace = traceback.format_exc()
-                        frappe.log_error(f"Stock Entry Insert/Submit Error: {str(inner_se)}\n{err_trace}", "Maintenance Stock Entry Detailed Error")
-                        print(f"Stock Entry Insert/Submit Error: {str(inner_se)}\n{err_trace}")
+                se.insert(ignore_permissions=True)
+                se.submit()
+                frappe.logger().info(f"Created Stock Entry {se.name} for Sales Order {doc.name}")
             except Exception as se_err:
                 import traceback
                 err_msg = f"Stock Entry Error: {str(se_err)}\n{traceback.format_exc()}"
