@@ -73,3 +73,8 @@ def check_module():
 		frappe.db.commit()
 		res["created_module"] = True
 	return res
+
+@frappe.whitelist()
+def update_technician_location(sales_order, latitude, longitude, tracking_status="active"):
+    frappe.logger().info(f"Technician Location Update: SO={sales_order}, Lat={latitude}, Lon={longitude}, Status={tracking_status}")
+    return {"status": "success", "message": "Location updated successfully"}
