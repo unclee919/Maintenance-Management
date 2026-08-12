@@ -559,3 +559,66 @@ def trigger_nps_survey_dispatch():
         dispatched.append({'sales_order': o.name, 'customer': o.customer_name, 'status': 'Survey Sent'})
         
     return {'status': 'success', 'surveys_dispatched': dispatched}
+
+@frappe.whitelist()
+def get_fsm_profitability_report():
+    """Calculates revenue vs cost of service per technician and job."""
+    try:
+        invoices = frappe.db.sql("""
+            select name, customer, grand_total, outstanding_amount 
+            from `tabSales Invoice` 
+            where docstatus = 1
+        """, as_dict=1)
+        
+        total_revenue = sum([float(inv.grand_total) for inv in invoices])
+        
+        # Estimate costs from stock entries and expense claims
+        stock_costs = frappe.db.sql("""
+            select sum(s.total_outgoing_value) as total_cost 
+            from `tabStock Entry` s 
+            where s.docstatus = 1 and s.stock_entry_type = 'Material Issue'
+        """, as_dict=1)
+        
+        expense_costs = frappe.db.sql("""
+            select sum(e.total_claimed_amount) as total_expenses 
+            from `tabExpense Claim` e 
+            where e.approval_status = 'Approved'
+        """, as_dict=1)
+        
+        cost_of_parts = float(stock_costs[0].total_cost or 0) if stock_costs else 0.0
+        cost_of_expenses = float(expense_costs[0].total_expenses or 0) if expense_costs else 0.0
+        total_cost = cost_of_parts + cost_of_expenses
+        
+        net_profit = total_revenue - total_cost
+        margin = (net_profit / total_revenue * 100) if total_revenue > 0 else 0.0
+        
+        return {
+            'status': 'success',
+            'total_revenue': round(total_revenue, 2),
+            'total_cost': round(total_cost, 2),
+            'net_profit': round(net_profit, 2),
+            'profit_margin_percent': round(margin, 2)
+        }
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def check_certification_expiries():
+    """Background check for technician certifications expiring within 30 days."""
+    try:
+        from frappe.utils import add_days, nowdate
+        target_date = add_days(nowdate(), 30)
+        
+        techs = frappe.db.sql("""
+            select name, technician_name, certification_expiry 
+            from `tabField Technician` 
+            where certification_expiry <= %s and certification_expiry >= %s
+        """, (target_date, nowdate()), as_dict=1)
+        
+        alerts = []
+        for t in techs:
+            alerts.append({'technician': t.name, 'name': t.technician_name, 'expiry': t.certification_expiry})
+            
+        return {'status': 'success', 'expiring_certifications': alerts}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
