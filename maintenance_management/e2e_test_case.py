@@ -1,15 +1,13 @@
 import traceback
-import os
 import frappe
 
-# Initialize frappe with site path
 frappe.init(site="erp.elmrkz.cloud", sites_path="sites")
 frappe.connect()
 
 try:
     print("=== STEP 1: Ensuring Technician Exists ===")
-    tech_name = "Tech-Alex-01"
-    if not frappe.db.exists("Field Technician", tech_name):
+    tech_id = "Alex Turner"
+    if not frappe.db.exists("Field Technician", tech_id):
         tech = frappe.get_doc({
             "doctype": "Field Technician",
             "technician_name": "Alex Turner",
@@ -18,9 +16,10 @@ try:
             "status": "Available"
         })
         tech.insert(ignore_permissions=True)
-        print(f"Created Technician: {tech.name}")
+        tech_id = tech.name
+        print(f"Created Technician: {tech_id}")
     else:
-        print(f"Technician already exists: {tech_name}")
+        print(f"Technician already exists: {tech_id}")
 
     print("\n=== STEP 2: Generating Sample Order (Service Request) ===")
     doc = frappe.get_doc({
@@ -36,10 +35,10 @@ try:
     print(f"Initial Status: {doc.status}")
 
     print("\n=== STEP 3: Assigning Technician ===")
-    doc.technician = tech_name
+    doc.technician = tech_id
     doc.status = "Assigned"
     doc.save(ignore_permissions=True)
-    print(f"Assigned Technician {tech_name} to {doc.name}. Current Status: {doc.status}")
+    print(f"Assigned Technician {tech_id} to {doc.name}. Current Status: {doc.status}")
 
     print("\n=== STEP 4: Simulating Technician Process (Accepted -> In Progress -> AI Diagnostics) ===")
     doc.status = "Accepted"
