@@ -43,12 +43,36 @@
  },
  {
   "doctype": "Custom Field",
-  "name": "Field Technician-specialty_equipment",
-  "dt": "Field Technician",
-  "fieldname": "specialty_equipment",
-  "fieldtype": "Data",
-  "insert_after": "warehouse",
-  "label": "Specialty Equipment Skill",
+  "name": "Sales Order-maintenance_technicians",
+  "dt": "Sales Order",
+  "fieldname": "maintenance_technicians",
+  "fieldtype": "Table",
+  "options": "Maintenance Technician Detail",
+  "insert_after": "service_photo",
+  "label": "Assigned Technicians Team",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Field Maintenance Settings-assignment_criteria",
+  "dt": "Field Maintenance Settings",
+  "fieldname": "assignment_criteria",
+  "fieldtype": "Select",
+  "insert_after": "auto_assign_technician",
+  "label": "Assignment Criteria",
+  "options": "Skill Based\nWorkload Balance\nTerritory Based\nRound Robin",
+  "default": "Skill Based",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Field Maintenance Settings-default_service_item",
+  "dt": "Field Maintenance Settings",
+  "fieldname": "default_service_item",
+  "fieldtype": "Link",
+  "options": "Item",
+  "insert_after": "assignment_criteria",
+  "label": "Default Service Item",
   "module": "Maintenance Management"
  }
 ]

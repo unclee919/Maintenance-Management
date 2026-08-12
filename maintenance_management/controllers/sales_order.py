@@ -71,22 +71,34 @@ def on_update(doc, method):
             process_erpnext_integration(doc)
 
 def auto_assign_tech(doc):
-    # Skill-based technician matching
-    tech = None
-    if doc.equipment_type:
-        tech = frappe.db.get_value("Field Technician", {"status": "Available", "specialty_equipment": ["like", f"%{doc.equipment_type}%"]}, "name")
-    
-    if not tech:
-        tech = frappe.db.get_value("Field Technician", {"status": "Available"}, "name")
+    try:
+        settings = frappe.get_single("Field Maintenance Settings")
+        criteria = settings.get("assignment_criteria", "Skill Based")
+    except Exception:
+        criteria = "Skill Based"
 
-    if tech:
-        doc.technician = tech
+    techs = []
+    if criteria == "Skill Based" and doc.equipment_type:
+        techs = frappe.get_all("Field Technician", filters={"status": "Available", "specialty_equipment": ["like", f"%{doc.equipment_type}%"]}, limit=2)
+    
+    if not techs:
+        techs = frappe.get_all("Field Technician", filters={"status": "Available"}, limit=2)
+
+    if techs:
+        # Populate multi-technician child table if empty
+        if not doc.get("maintenance_technicians"):
+            for t in techs:
+                doc.append("maintenance_technicians", {
+                    "technician": t.name,
+                    "role_or_responsibility": "Primary Field Engineer" if t == techs[0] else "Support Technician"
+                })
         doc.maintenance_status = "Assigned"
 
 def trigger_webhook(doc, event_type):
     try:
         webhook_url = frappe.db.get_value("Field Maintenance Settings", None, "webhook_url")
         if webhook_url:
+            tech_list = [row.technician for row in doc.get("maintenance_technicians", [])]
             payload = {
                 "event": event_type,
                 "sales_order": doc.name,
@@ -94,7 +106,7 @@ def trigger_webhook(doc, event_type):
                 "status": doc.maintenance_status,
                 "equipment_type": doc.equipment_type,
                 "equipment_serial_no": doc.get("equipment_serial_no"),
-                "technician": doc.technician,
+                "technicians": tech_list,
                 "grand_total": doc.grand_total,
                 "sla_status": doc.get("sla_status")
             }
@@ -105,8 +117,10 @@ def trigger_webhook(doc, event_type):
 def process_erpnext_integration(doc):
     try:
         warehouse = "Stores - EM"
-        if doc.technician:
-            tech_wh = frappe.db.get_value("Field Technician", doc.technician, "warehouse")
+        # Determine warehouse from assigned technicians
+        if doc.get("maintenance_technicians"):
+            first_tech = doc.maintenance_technicians[0].technician
+            tech_wh = frappe.db.get_value("Field Technician", first_tech, "warehouse")
             if tech_wh and frappe.db.exists("Warehouse", tech_wh):
                 warehouse = tech_wh
 
@@ -115,7 +129,7 @@ def process_erpnext_integration(doc):
             if wh:
                 warehouse = wh
 
-        # Create Stock Entry (Material Issue) for items consumed in Sales Order
+        # Create Stock Entry (Material Issue) for all items consumed in Sales Order
         if frappe.db.exists("DocType", "Stock Entry") and doc.get("items"):
             try:
                 se = frappe.new_doc("Stock Entry")
@@ -151,7 +165,6 @@ def run_ai_diagnostics(sales_order_name):
     suggested_items = []
     est_cost = 100.0
 
-    # Enhanced AI diagnostics with equipment context
     if "chiller" in equipment or "cool" in desc or "ac" in desc or "refrigerant" in desc:
         suggested_items.append({"item_code": "Refrigerant R410A", "qty": 2, "rate": 50.0})
         suggested_items.append({"item_code": "Filter Drier", "qty": 1, "rate": 35.0})
@@ -160,10 +173,6 @@ def run_ai_diagnostics(sales_order_name):
         suggested_items.append({"item_code": "Fan Motor Bearing", "qty": 1, "rate": 75.0})
         suggested_items.append({"item_code": "Synthetic Oil 15W-40", "qty": 3, "rate": 20.0})
         est_cost = 210.0
-    elif "valve" in desc or "leak" in desc or "water" in desc:
-        suggested_items.append({"item_code": "Drain Pipe Valve", "qty": 1, "rate": 25.0})
-        suggested_items.append({"item_code": "PTFE Thread Seal Tape", "qty": 2, "rate": 5.0})
-        est_cost = 95.0
     else:
         suggested_items.append({"item_code": "General Diagnostic Kit", "qty": 1, "rate": 40.0})
         est_cost = 100.0
@@ -184,7 +193,7 @@ def run_ai_diagnostics(sales_order_name):
             except Exception:
                 pass
 
-    if not doc.get("items"):
+    if len(doc.get("items", [])) < 2:
         for p in suggested_items:
             doc.append("items", {
                 "item_code": p["item_code"],
@@ -193,12 +202,11 @@ def run_ai_diagnostics(sales_order_name):
                 "delivery_date": doc.delivery_date or frappe.utils.nowdate()
             })
         doc.save(ignore_permissions=True)
-        return {"status": "success", "message": "Advanced AI Diagnostics completed successfully with historical part prediction", "estimated_cost": est_cost, "suggested_items": suggested_items}
+        return {"status": "success", "message": "Multi-item AI Diagnostics completed successfully", "estimated_cost": est_cost, "suggested_items": suggested_items}
 
-    return {"status": "info", "message": "Items already listed"}
+    return {"status": "info", "message": "Multiple items already present on order"}
 
 def check_sla_escalations():
-    """Daily background job to flag service orders stuck in In Progress for over 48 hours."""
     try:
         stuck_orders = frappe.get_all(
             "Sales Order",
@@ -206,10 +214,9 @@ def check_sla_escalations():
                 "maintenance_status": ["in", ["In Progress", "Waiting for Part"]],
                 "modified": ["<", frappe.utils.add_days(frappe.utils.now(), -2)]
             },
-            fields=["name", "customer", "technician", "modified"]
+            fields=["name", "customer", "modified"]
         )
         for order in stuck_orders:
-            frappe.logger().warning(f"SLA Escalation Alert: Order {order.name} for customer {order.customer} assigned to {order.technician} has been stuck since {order.modified}")
             frappe.log_error(f"Order {order.name} is overdue for completion.", "Maintenance SLA Escalation")
         frappe.db.commit()
     except Exception as e:
