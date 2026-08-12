@@ -43,13 +43,12 @@
  },
  {
   "doctype": "Custom Field",
-  "name": "Sales Order-maintenance_technicians",
+  "name": "Sales Order-assigned_technicians",
   "dt": "Sales Order",
-  "fieldname": "maintenance_technicians",
-  "fieldtype": "Table",
-  "options": "Maintenance Technician Detail",
+  "fieldname": "assigned_technicians",
+  "fieldtype": "Small Text",
   "insert_after": "service_photo",
-  "label": "Assigned Technicians Team",
+  "label": "Assigned Technicians (Comma Separated)",
   "module": "Maintenance Management"
  },
  {

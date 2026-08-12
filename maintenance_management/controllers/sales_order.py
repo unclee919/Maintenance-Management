@@ -85,20 +85,14 @@ def auto_assign_tech(doc):
         techs = frappe.get_all("Field Technician", filters={"status": "Available"}, limit=2)
 
     if techs:
-        # Populate multi-technician child table if empty
-        if not doc.get("maintenance_technicians"):
-            for t in techs:
-                doc.append("maintenance_technicians", {
-                    "technician": t.name,
-                    "role_or_responsibility": "Primary Field Engineer" if t == techs[0] else "Support Technician"
-                })
+        tech_list = [t.name for t in techs]
+        doc.assigned_technicians = ", ".join(tech_list)
         doc.maintenance_status = "Assigned"
 
 def trigger_webhook(doc, event_type):
     try:
         webhook_url = frappe.db.get_value("Field Maintenance Settings", None, "webhook_url")
         if webhook_url:
-            tech_list = [row.technician for row in doc.get("maintenance_technicians", [])]
             payload = {
                 "event": event_type,
                 "sales_order": doc.name,
@@ -106,7 +100,7 @@ def trigger_webhook(doc, event_type):
                 "status": doc.maintenance_status,
                 "equipment_type": doc.equipment_type,
                 "equipment_serial_no": doc.get("equipment_serial_no"),
-                "technicians": tech_list,
+                "assigned_technicians": doc.assigned_technicians,
                 "grand_total": doc.grand_total,
                 "sla_status": doc.get("sla_status")
             }
@@ -117,9 +111,8 @@ def trigger_webhook(doc, event_type):
 def process_erpnext_integration(doc):
     try:
         warehouse = "Stores - EM"
-        # Determine warehouse from assigned technicians
-        if doc.get("maintenance_technicians"):
-            first_tech = doc.maintenance_technicians[0].technician
+        if doc.assigned_technicians:
+            first_tech = doc.assigned_technicians.split(",")[0].strip()
             tech_wh = frappe.db.get_value("Field Technician", first_tech, "warehouse")
             if tech_wh and frappe.db.exists("Warehouse", tech_wh):
                 warehouse = tech_wh
@@ -129,7 +122,7 @@ def process_erpnext_integration(doc):
             if wh:
                 warehouse = wh
 
-        # Create Stock Entry (Material Issue) for all items consumed in Sales Order
+        # Create Stock Entry (Material Issue) for all items in Sales Order
         if frappe.db.exists("DocType", "Stock Entry") and doc.get("items"):
             try:
                 se = frappe.new_doc("Stock Entry")
