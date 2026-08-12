@@ -174,13 +174,13 @@ class FieldServiceRequest(Document):
                             cust_doc = frappe.get_doc({
                                 "doctype": "Customer",
                                 "customer_name": customer,
-                                "customer_type": "Individual",
-                                "customer_group": "All Customer Groups",
-                                "territory": "All Territories"
+                                "customer_type": "Company",
+                                "customer_group": "Commercial",
+                                "territory": "Egypt"
                             })
                             cust_doc.insert(ignore_permissions=True)
-                        except Exception:
-                            pass
+                        except Exception as cust_err:
+                            frappe.log_error(f"Customer creation error: {str(cust_err)}", "Maintenance ERPNext Error")
 
                     inv_items = []
                     for p in self.get("parts_consumed") or []:
