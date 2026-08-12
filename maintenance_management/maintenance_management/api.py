@@ -861,3 +861,43 @@ def check_technician_fatigue(technician):
         }
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def fix_workspaces():
+    ws_mgmt = frappe.get_doc("Workspace", "Maintenance Management")
+    mgmt_content = [
+        {"type": "Card Break", "data": {"label": "Maintenance Operations Overview", "col": 12}},
+        {"type": "Number Card", "data": {"card_name": "Open Maintenance Orders", "col": 4}},
+        {"type": "Number Card", "data": {"card_name": "SLA Breached / Escalated", "col": 4}},
+        {"type": "Number Card", "data": {"card_name": "Avg Customer Rating", "col": 4}},
+        {"type": "Card Break", "data": {"label": "Quick Links & Management", "col": 12}},
+        {"type": "Shortcut", "data": {"shortcut_name": "Field Technician", "col": 3}},
+        {"type": "Shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 3}},
+        {"type": "Shortcut", "data": {"shortcut_name": "Field Service Request", "col": 3}},
+        {"type": "Shortcut", "data": {"shortcut_name": "Sales Order", "col": 3}}
+    ]
+    ws_mgmt.content = json.dumps(mgmt_content)
+    ws_mgmt.save(ignore_permissions=True)
+
+    if frappe.db.exists("Workspace", "Technician Dashboard"):
+        ws_tech = frappe.get_doc("Workspace", "Technician Dashboard")
+        tech_content = [
+            {"type": "Card Break", "data": {"label": "Technician Portal & Field Operations", "col": 12}},
+            {"type": "Number Card", "data": {"card_name": "My Open Orders", "col": 4}},
+            {"type": "Number Card", "data": {"card_name": "My SLA Performance", "col": 4}},
+            {"type": "Number Card", "data": {"card_name": "My Avg Rating", "col": 4}},
+            {"type": "Card Break", "data": {"label": "Field Actions & Inventory", "col": 12}},
+            {"type": "Shortcut", "data": {"shortcut_name": "Active Service Orders", "col": 4}},
+            {"type": "Shortcut", "data": {"shortcut_name": "Van Warehouse", "col": 4}},
+            {"type": "Shortcut", "data": {"shortcut_name": "Field Technician Profile", "col": 4}}
+        ]
+        ws_tech.content = json.dumps(tech_content)
+        ws_tech.save(ignore_permissions=True)
+
+    frappe.db.commit()
+    return "Workspaces fixed successfully."
+
+@frappe.whitelist()
+def update_technician_location(sales_order, latitude=None, longitude=None, tracking_status="active"):
+    from maintenance_management.maintenance_management.controllers.sales_order import update_technician_location as utl
+    return utl(sales_order, latitude, longitude, tracking_status)

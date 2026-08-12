@@ -9,10 +9,55 @@ def random_string(length=10):
 
 @frappe.whitelist()
 def run():
-    # 1. Maintenance Management Workspace
+    # 1. Ensure Number Cards exist
+    cards_config = [
+        {
+            "name": "Open Maintenance Orders",
+            "document_type": "Sales Order",
+            "function": "Count",
+            "filters": '[["Sales Order", "status", "!=", "Completed"], ["Sales Order", "docstatus", "=", "1"]]',
+            "aggregate_function_based_on": ""
+        },
+        {
+            "name": "SLA Breached / Escalated Orders",
+            "document_type": "Sales Order",
+            "function": "Count",
+            "filters": '[["Sales Order", "custom_is_emergency", "=", "1"], ["Sales Order", "status", "!=", "Completed"]]',
+            "aggregate_function_based_on": ""
+        },
+        {
+            "name": "Average Customer Rating",
+            "document_type": "Sales Order",
+            "function": "Average",
+            "aggregate_function_based_on": "custom_customer_rating",
+            "filters": '[["Sales Order", "docstatus", "=", "1"]]'
+        }
+    ]
+
+    for cfg in cards_config:
+        if not frappe.db.exists("Number Card", cfg["name"]):
+            nc = frappe.get_doc({
+                "doctype": "Number Card",
+                "name": cfg["name"],
+                "label": cfg["name"],
+                "document_type": cfg["document_type"],
+                "function": cfg["function"],
+                "aggregate_function_based_on": cfg["aggregate_function_based_on"],
+                "filters_json": cfg["filters"],
+                "is_standard": 1,
+                "module": "Maintenance Management"
+            })
+            nc.insert(ignore_permissions=True)
+        else:
+            nc = frappe.get_doc("Number Card", cfg["name"])
+            nc.filters_json = cfg["filters"]
+            nc.save(ignore_permissions=True)
+
+    # 2. Reconstruct Maintenance Management Workspace
     ws = frappe.get_doc('Workspace', 'Maintenance Management')
     ws.set('shortcuts', [])
-    ws.set('links', [])
+    ws.set('cards', [])
+    ws.set('quick_lists', [])
     
     content = [
         {"id": random_string(), "type": "header", "data": {"text": "Field Maintenance Operations & Analytics", "level": 2}},
@@ -45,10 +90,11 @@ def run():
         
     ws.save(ignore_permissions=True)
     
-    # 2. Technician Dashboard Workspace
+    # 3. Reconstruct Technician Dashboard Workspace
     ws_tech = frappe.get_doc('Workspace', 'Technician Dashboard')
     ws_tech.set('shortcuts', [])
-    ws_tech.set('links', [])
+    ws_tech.set('cards', [])
+    ws_tech.set('quick_lists', [])
     
     content_tech = [
         {"id": random_string(), "type": "header", "data": {"text": "Technician Portal & Field Operations", "level": 2}},
@@ -78,4 +124,4 @@ def run():
     
     frappe.db.commit()
     frappe.clear_cache()
-    print("Workspaces successfully populated with content blocks.")
+    print("Workspaces and Number Cards successfully created and populated.")
