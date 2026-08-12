@@ -12,13 +12,13 @@ def populate_data():
     
     # 1. Update Field Maintenance Settings
     try:
+        # Standard way to handle Single DocType in Frappe
         if not frappe.db.exists("Field Maintenance Settings", "Field Maintenance Settings"):
             doc = frappe.new_doc("Field Maintenance Settings")
-            doc.name = "Field Maintenance Settings"
             doc.insert(ignore_permissions=True)
             frappe.db.commit()
-        
-        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+            
+        settings = frappe.get_doc("Field Maintenance Settings")
         settings.enable_gps_tracking = 1
         settings.require_human_confirmation = 0
         settings.enable_price_approval = 1
@@ -110,39 +110,35 @@ def populate_data():
         so.customer = "Test Customer"
         so.custom_is_maintenance_order = 1
         so.custom_maintenance_status = "New"
-        so.custom_equipment_fault_description = "Intensive Test: Unit making loud noise."
+        so.custom_equipment_fault_description = "Intensive Test Cycle: Verification of all buttons and status transitions."
         so.delivery_date = add_days(nowdate(), 1)
         so.append("items", {"item_code": "SVC-VISIT", "qty": 1, "rate": 200})
         so.insert(ignore_permissions=True)
         so.submit()
         print(f"✓ Test Sales Order {so.name} created.")
 
-        # Simulate Technician Assignment
+        # Status transitions
         so.custom_assigned_technician = "TECH-001"
         so.custom_maintenance_status = "Assigned"
         so.save(ignore_permissions=True)
-        print("✓ Technician assigned.")
+        print("✓ Transition: Assigned.")
 
-        # Simulate Start Trip
-        so.custom_maintenance_status = "On the Way"
+        so.custom_maintenance_status = "Accepted"
         so.save(ignore_permissions=True)
-        print("✓ Status: On the Way.")
+        print("✓ Transition: Accepted (On the Way).")
 
-        # Simulate Arrived
-        so.custom_maintenance_status = "Arrived"
+        so.custom_maintenance_status = "In Progress"
         so.save(ignore_permissions=True)
-        print("✓ Status: Arrived.")
+        print("✓ Transition: In Progress (Arrived).")
 
-        # Simulate Completion & Billing
+        # Simulate Billing
         from maintenance_management.maintenance_management.api import technician_add_billing_items
-        # Adding a spare part
         technician_add_billing_items(so.name, [{"item_code": "FILT-003", "qty": 1, "rate": 150}])
         
-        # Final Status
         so.reload()
         so.custom_maintenance_status = "Completed"
         so.save(ignore_permissions=True)
-        print("✓ Status: Completed. Billing updated.")
+        print("✓ Transition: Completed. Cycle finished.")
 
     except Exception as e:
         print(f"⚠ Cycle simulation failed: {e}")
