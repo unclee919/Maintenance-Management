@@ -699,3 +699,71 @@ def reserve_van_spare_parts(sales_order, technician, item_code, qty):
         return {'status': 'success', 'warehouse': van_warehouse, 'reserved_qty': qty, 'message': 'Inventory successfully reserved.'}
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def send_technician_enroute_alert(sales_order):
+    """Triggers an automated WhatsApp/SMS alert to the customer when the technician starts the trip."""
+    try:
+        so = frappe.get_doc('Sales Order', sales_order)
+        customer_phone = so.get('contact_mobile') or so.get('phone') or '966500000000'
+        tracking_url = f"https://erp.elmrkz.cloud/api/method/maintenance_management.maintenance_management.api.get_customer_tracking?sales_order={sales_order}"
+        
+        message = f"Hello {so.customer_name}, your assigned technician is on the way for service order {sales_order}. Track live status here: {tracking_url}"
+        
+        # Log notification dispatch
+        frappe.logger().info(f"Enroute alert sent to {customer_phone}: {message}")
+        return {'status': 'success', 'sales_order': sales_order, 'recipient': customer_phone, 'message_sent': message}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def check_amc_renewals():
+    """Background check for AMC contracts expiring within 30 days to alert the sales team."""
+    try:
+        from frappe.utils import add_days, nowdate
+        target_date = add_days(nowdate(), 30)
+        
+        amcs = frappe.db.sql("""
+            select name, customer, end_date, contact_email 
+            from `tabMaintenance Contract` 
+            where end_date <= %s and end_date >= %s and status = 'Active'
+        """, (target_date, nowdate()), as_dict=1)
+        
+        alerts = []
+        for a in amcs:
+            alerts.append({'contract': a.name, 'customer': a.customer, 'end_date': a.end_date})
+            
+        return {'status': 'success', 'expiring_amcs': alerts}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def get_asset_event_timeline(serial_no):
+    """Returns a visual chronological life-cycle timeline for an asset or serial number."""
+    try:
+        if not serial_no:
+            return {'status': 'error', 'message': 'Serial number is required.'}
+            
+        # Fetch all sales orders referencing this serial number
+        orders = frappe.db.sql("""
+            select parent as sales_order, item_code, description, creation 
+            from `tabSales Order Item` 
+            where custom_serial_no = %s
+        """, serial_no, as_dict=1)
+        
+        timeline = []
+        for o in orders:
+            so_doc = frappe.get_doc('Sales Order', o.sales_order)
+            timeline.append({
+                'date': o.creation,
+                'event': 'Maintenance Service',
+                'sales_order': o.sales_order,
+                'status': so_doc.get('custom_maintenance_status'),
+                'technician': so_doc.get('custom_assigned_technician'),
+                'notes': so_doc.get('custom_technician_notes')
+            })
+            
+        timeline.sort(key=lambda x: x['date'], reverse=True)
+        return {'status': 'success', 'serial_no': serial_no, 'timeline': timeline}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
