@@ -113,10 +113,11 @@ def after_migrate():
     ])
     ws.save(ignore_permissions=True)
 
-    # 4. Update Technician Dashboard Workspace Content
-    if frappe.db.exists("Workspace", "Technician Dashboard"):
-        ws_tech = frappe.get_doc("Workspace", "Technician Dashboard")
-        ws_tech.content = json.dumps([
+	# 4. Update Technician Dashboard Workspace Content
+	if frappe.db.exists("Workspace", "Technician Dashboard"):
+		ws_tech = frappe.get_doc("Workspace", "Technician Dashboard")
+		ws_tech.type = "Workspace"
+		ws_tech.content = json.dumps([
             {"type": "header", "data": {"text": "🛠️ Technician Field Operations & Portal", "col": 12}},
             {"type": "spacer", "data": {"col": 12}},
             {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 6}},
