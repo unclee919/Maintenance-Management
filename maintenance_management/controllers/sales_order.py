@@ -180,10 +180,9 @@ def check_sla_escalations():
                 "modified": ["<", frappe.utils.add_days(frappe.utils.nowdate(), -2)]
             },
             fields=["name", "customer", "technician", "modified"]
-        ]
+        )
         for order in stuck_orders:
             frappe.logger().warning(f"SLA Escalation Alert: Order {order.name} for customer {order.customer} assigned to {order.technician} has been stuck since {order.modified}")
-            # Log error / escalation for management dashboard review
             frappe.log_error(f"Order {order.name} is overdue for completion.", "Maintenance SLA Escalation")
     except Exception as e:
         frappe.log_error(f"SLA Check Error: {str(e)}", "Maintenance SLA Error")
