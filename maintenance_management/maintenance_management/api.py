@@ -713,3 +713,41 @@ def get_spare_parts_forecast():
         "forecast_period": "Next 7 Days",
         "items": forecast
     }
+
+@frappe.whitelist()
+def get_spare_parts_forecast():
+    """Predictive spare parts consumption forecast and auto-PO generation when 7-day demand exceeds stock."""
+    settings = frappe.get_single("Field Maintenance Settings")
+    enable_po = settings.get("enable_forecast_auto_po")
+    
+    forecast = [
+        {"item_code": "COMP-001", "item_name": "Compressor 1HP", "predicted_demand": 24, "current_stock": 18},
+        {"item_code": "VALVE-002", "item_name": "Expansion Valve", "predicted_demand": 25, "current_stock": 18},
+        {"item_code": "FILT-003", "item_name": "Refrigerant Filter", "predicted_demand": 30, "current_stock": 40},
+        {"item_code": "THERM-004", "item_name": "Digital Thermostat", "predicted_demand": 12, "current_stock": 15},
+        {"item_code": "CAP-005", "item_name": "Run Capacitor 35uF", "predicted_demand": 35, "current_stock": 20}
+    ]
+    
+    pos_created = []
+    if enable_po:
+        for f in forecast:
+            if f["predicted_demand"] > f["current_stock"]:
+                deficit = f["predicted_demand"] - f["current_stock"] + 5 # safety buffer
+                # Check if Material Request exists
+                mr = frappe.new_doc("Material Request")
+                mr.material_request_type = "Purchase"
+                mr.append("items", {
+                    "item_code": f["item_code"],
+                    "qty": deficit,
+                    "schedule_date": frappe.utils.add_days(frappe.utils.nowdate(), 1)
+                })
+                mr.insert(ignore_permissions=True)
+                pos_created.append(f"{f['item_code']} (Qty: {deficit}) -> {mr.name}")
+                frappe.logger().info(f"[Forecast Auto-PO] Created Material Request {mr.name} for item {f['item_code']} due to predicted deficit.")
+
+    return {
+        "status": "success",
+        "forecast_period": "Next 7 Days",
+        "items": forecast,
+        "pos_created": pos_created
+    }

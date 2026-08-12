@@ -40,15 +40,35 @@ frappe.pages['technician-tracking'].on_page_load = function(wrapper) {
                 </div>
             </div>
             <div class="card">
-                <div class="card-header bg-secondary text-white"><strong>Live Map Simulator & Geofence Alerts</strong></div>
-                <div class="card-body text-center" style="min-height: 250px; background: #f8f9fa;">
-                    <div id="map-simulator-view" class="p-4">
-                        <h4>📍 GPS Live Tracking & Geofence View (Cairo / Giza Region)</h4>
-                        <p class="text-muted">Automatic geofencing triggers alerts when technicians enter within 500m of customer locations.</p>
-                        <div class="btn-group mt-3" role="group">
-                            <button class="btn btn-outline-primary" onclick="frappe.show_alert('Refreshing GPS pings...')">🔄 Refresh GPS Feed</button>
-                            <button class="btn btn-outline-success" onclick="test_geofence_simulation()">📍 Simulate Geofence Arrival</button>
-                            <button class="btn btn-outline-danger" onclick="frappe.show_alert('Emergency dispatch broadcast sent!')">🚨 Emergency Broadcast</button>
+                <div class="card-header bg-secondary text-white"><strong>🗺️ Live Map Overlay, Technician Routes & Geofence Boundaries (Cairo / Giza)</strong></div>
+                <div class="card-body" style="background: #ffffff;">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div style="background: #e9ecef; border: 2px dashed #6c757d; border-radius: 8px; min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                                <div style="position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px;">
+                                    🟢 Active Geofence Boundary (500m Radius)<br>
+                                    🔵 Real-time Technician GPS Route
+                                </div>
+                                <h4>📍 Interactive Map Overlay Simulator</h4>
+                                <p class="text-muted mb-3">Showing live routing from technician van to customer site with active geofence perimeter.</p>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-primary btn-sm" onclick="frappe.show_alert('Reloading real-time route telemetry...')">🔄 Refresh Telemetry</button>
+                                    <button class="btn btn-success btn-sm" onclick="test_geofence_simulation()">📍 Simulate Geofence Arrival</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white"><strong>Active Route Telemetry</strong></div>
+                                <div class="card-body" style="font-size: 13px;">
+                                    <p><strong>Route Status:</strong> On Schedule</p>
+                                    <p><strong>Avg Speed:</strong> 42 km/h</p>
+                                    <p><strong>Geofence Status:</strong> Active (500m Perimeter)</p>
+                                    <p><strong>Last Ping:</strong> Just now (Lat: 30.0444, Lon: 31.2357)</p>
+                                    <hr>
+                                    <button class="btn btn-block btn-outline-danger btn-sm" onclick="frappe.show_alert('Emergency dispatch broadcast sent to all active units!')">🚨 Emergency Dispatch Broadcast</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

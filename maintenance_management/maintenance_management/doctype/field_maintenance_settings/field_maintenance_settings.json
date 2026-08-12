@@ -165,6 +165,12 @@
 				   "fieldname": "reorder_qty",
 				   "fieldtype": "Int",
 				   "label": "Default Reorder Quantity"
+				  },
+				  {
+				   "default": "1",
+				   "fieldname": "enable_forecast_auto_po",
+				   "fieldtype": "Check",
+				   "label": "Enable Auto-Purchase Order when 7-Day Forecast Exceeds Stock"
 				  }
 				 ],
  "icon": "octicon octicon-settings",
