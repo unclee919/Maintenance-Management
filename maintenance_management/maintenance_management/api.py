@@ -56,3 +56,20 @@ def after_migrate():
 		})
 		w.insert(ignore_permissions=True)
 		frappe.db.commit()
+
+@frappe.whitelist()
+def check_module():
+	res = {
+		"modules": frappe.get_all('Module Def', filters={'app_name': 'maintenance_management'}, fields=['name']),
+		"workspaces": frappe.get_all('Workspace', filters={'app': 'maintenance_management'}, fields=['name', 'module', 'public'])
+	}
+	if not frappe.db.exists('Module Def', 'Maintenance Management'):
+		m = frappe.get_doc({
+			'doctype': 'Module Def',
+			'module_name': 'Maintenance Management',
+			'app_name': 'maintenance_management'
+		})
+		m.insert(ignore_permissions=True)
+		frappe.db.commit()
+		res["created_module"] = True
+	return res
