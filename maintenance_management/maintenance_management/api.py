@@ -449,3 +449,80 @@ def verify_technician_certification(technician, required_skill):
         return {'status': 'failed', 'reason': 'Technician certification has expired.'}
         
     return {'status': 'passed'}
+
+@frappe.whitelist()
+def sync_offline_actions(offline_actions):
+    """Synchronizes cached offline actions (signatures, notes, status updates) when technician reconnects."""
+    try:
+        import json
+        if isinstance(offline_actions, str):
+            offline_actions = json.loads(offline_actions)
+            
+        results = []
+        for act in offline_actions:
+            so_name = act.get('sales_order')
+            if not so_name:
+                continue
+            so = frappe.get_doc('Sales Order', so_name)
+            if act.get('status'):
+                so.custom_maintenance_status = act.get('status')
+            if act.get('notes'):
+                so.custom_technician_notes = act.get('notes')
+            if act.get('signature'):
+                so.custom_customer_signature = act.get('signature')
+            so.save(ignore_permissions=True)
+            results.append({'sales_order': so_name, 'synced': True})
+            
+        frappe.db.commit()
+        return {'status': 'success', 'synced_count': len(results), 'details': results}
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), 'Offline Sync Error')
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def validate_asset_warranty(serial_no):
+    """Automatically checks serial number purchase date to determine warranty status."""
+    try:
+        if not serial_no:
+            return {'warranty_status': 'Unknown'}
+            
+        serial = frappe.get_doc('Serial No', serial_no)
+        # Check if within 1 year of purchase or delivery
+        purchase_date = serial.get('purchase_date') or serial.get('creation')
+        if purchase_date:
+            from frappe.utils import getdate, date_diff
+            days = date_diff(frappe.utils.nowdate(), purchase_date)
+            if days <= 365:
+                return {'warranty_status': 'Under Warranty', 'days_elapsed': days, 'is_billable': 0}
+        return {'warranty_status': 'Out of Warranty', 'is_billable': 1}
+    except Exception as e:
+        return {'warranty_status': 'Out of Warranty', 'is_billable': 1}
+
+@frappe.whitelist()
+def get_technician_leaderboard():
+    """Returns gamified leaderboard ranking technicians by rating and completed orders."""
+    techs = frappe.get_all('Field Technician', fields=['name', 'technician_name', 'zone', 'status'])
+    leaderboard = []
+    
+    for t in techs:
+        completed_count = frappe.db.count('Sales Order', {'custom_assigned_technician': t.name, 'custom_maintenance_status': 'Completed'})
+        avg_rating = frappe.db.sql("""
+            select avg(custom_customer_rating) as avg_rating 
+            from `tabSales Order` 
+            where custom_assigned_technician = %s and custom_customer_rating > 0
+        """, t.name, as_dict=1)
+        
+        rating = avg_rating[0].avg_rating if avg_rating and avg_rating[0].avg_rating else 5.0
+        score = (completed_count * 10) + (float(rating) * 20)
+        
+        leaderboard.append({
+            'technician': t.name,
+            'name': t.technician_name,
+            'zone': t.zone,
+            'completed_orders': completed_count,
+            'average_rating': round(float(rating), 2),
+            'gamification_score': round(score, 2)
+        })
+        
+    leaderboard.sort(key=lambda x: x['gamification_score'], reverse=True)
+    return {'status': 'success', 'leaderboard': leaderboard}
