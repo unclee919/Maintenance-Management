@@ -1,0 +1,69 @@
+[
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Order",
+  "fieldname": "equipment_type",
+  "fieldtype": "Data",
+  "insert_after": "customer",
+  "label": "Equipment Type (e.g. AC, Chiller)",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Order",
+  "fieldname": "issue_description",
+  "fieldtype": "Text",
+  "insert_after": "equipment_type",
+  "label": "Issue Description",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Order",
+  "fieldname": "maintenance_status",
+  "fieldtype": "Select",
+  "insert_after": "issue_description",
+  "label": "Maintenance Status",
+  "options": "New\nPending Confirmation\nAssigned\nAccepted\nIn Progress\nWaiting for Part\nWaiting for Price Approval\nCompleted\nCancelled",
+  "default": "New",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Order",
+  "fieldname": "technician",
+  "fieldtype": "Link",
+  "insert_after": "maintenance_status",
+  "label": "Assigned Technician",
+  "options": "Field Technician",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Order",
+  "fieldname": "scheduled_date_time",
+  "fieldtype": "Datetime",
+  "insert_after": "technician",
+  "label": "Scheduled Date & Time",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "feedback_score",
+  "fieldtype": "Select",
+  "insert_after": "customer",
+  "label": "Feedback Score",
+  "options": "5 - Excellent\n4 - Very Good\n3 - Good\n2 - Fair\n1 - Poor",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "customer_feedback",
+  "fieldtype": "Small Text",
+  "insert_after": "feedback_score",
+  "label": "Customer Comments / Review",
+  "module": "Maintenance Management"
+ }
+]

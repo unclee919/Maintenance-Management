@@ -168,19 +168,24 @@ class FieldServiceRequest(Document):
             if frappe.db.exists("DocType", "Sales Invoice") and self.total_amount and self.total_amount > 0:
                 existing_invoice = frappe.db.get_value("Sales Invoice", {"remarks": ["like", f"%{self.name}%"]}, "name")
                 if not existing_invoice:
-                    customer = self.customer_name
-                    if not frappe.db.exists("Customer", customer):
+                    customer_name = self.customer_name
+                    existing_cust = frappe.db.get_value("Customer", {"customer_name": customer_name}, "name")
+                    if not existing_cust:
                         try:
                             cust_doc = frappe.get_doc({
                                 "doctype": "Customer",
-                                "customer_name": customer,
+                                "customer_name": customer_name,
                                 "customer_type": "Company",
                                 "customer_group": "Commercial",
                                 "territory": "Egypt"
                             })
                             cust_doc.insert(ignore_permissions=True)
+                            customer = cust_doc.name
                         except Exception as cust_err:
                             frappe.log_error(f"Customer creation error: {str(cust_err)}", "Maintenance ERPNext Error")
+                            customer = customer_name
+                    else:
+                        customer = existing_cust
 
                     inv_items = []
                     for p in self.get("parts_consumed") or []:
