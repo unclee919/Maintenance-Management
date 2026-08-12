@@ -1,8 +1,8 @@
 app_name = "maintenance_management"
 app_title = "Maintenance Management"
-app_publisher = "Manus AI"
+app_publisher = "Enterprise Maintenance Solutions"
 app_description = "Field Maintenance Management System extending ERPNext Sales Order and Sales Invoice"
-app_email = "support@manus.im"
+app_email = "support@elmrkz.cloud"
 app_license = "mit"
 
 doc_events = {
