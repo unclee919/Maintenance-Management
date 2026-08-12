@@ -177,7 +177,7 @@ def check_sla_escalations():
             "Sales Order",
             filters={
                 "maintenance_status": ["in", ["In Progress", "Waiting for Part"]],
-                "modified": ["<", frappe.utils.add_days(frappe.utils.nowdate(), -2)]
+                "modified": ["<", frappe.utils.add_days(frappe.utils.now(), -2)]
             },
             fields=["name", "customer", "technician", "modified"]
         )
