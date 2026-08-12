@@ -130,7 +130,9 @@ def process_erpnext_integration(doc):
                             "qty": item.qty,
                             "rate": item.rate,
                             "so_detail": item.name,
-                            "sales_order": doc.name
+                            "sales_order": doc.name,
+                            "income_account": "Sales - EM",
+                            "cost_center": "Main - EM"
                         })
                     inv = frappe.get_doc({
                         "doctype": "Sales Invoice",
