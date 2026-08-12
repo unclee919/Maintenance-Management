@@ -75,7 +75,8 @@ def after_migrate():
             "module": "Maintenance Management",
             "time_interval": "Monthly",
             "timeseries": 0,
-            "type": "Donut"
+            "type": "Donut",
+            "filters_json": "[]"
         })
         chart.insert(ignore_permissions=True)
 
