@@ -105,7 +105,8 @@ def process_erpnext_integration(doc):
                         "basic_rate": item.rate,
                         "valuation_rate": item.rate,
                         "allow_zero_valuation_rate": 1,
-                        "s_warehouse": warehouse
+                        "s_warehouse": warehouse,
+                        "t_warehouse": ""
                     })
                 if se_items:
                     try:
