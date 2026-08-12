@@ -39,8 +39,7 @@ def validate(doc, method):
         else:
             doc.sla_status = "On Time"
 
-    # If warranty claim, zero out or adjust item rates if configured
-    if doc.get("is_warranty_claim") and doc.get("original_order_ref"):
+    if doc.get("is_warranty_claim"):
         for item in doc.get("items", []):
             item.rate = 0.0
             item.amount = 0.0
@@ -51,6 +50,11 @@ def before_save(doc, method):
         auto_assign = settings.get("auto_assign_technician", 1)
     except Exception:
         auto_assign = 1
+
+    if doc.get("is_warranty_claim"):
+        for item in doc.get("items", []):
+            item.rate = 0.0
+            item.amount = 0.0
 
     if doc.is_new() and not doc.maintenance_status:
         doc.maintenance_status = "New"
@@ -197,11 +201,11 @@ def run_ai_diagnostics(sales_order_name):
             doc.append("items", {
                 "item_code": p["item_code"],
                 "qty": p["qty"],
-                "rate": p["rate"],
+                "rate": 0.0 if doc.get("is_warranty_claim") else p["rate"],
                 "delivery_date": doc.delivery_date or frappe.utils.nowdate()
             })
         doc.save(ignore_permissions=True)
-        return {"status": "success", "message": "Multi-item AI Diagnostics completed successfully", "estimated_cost": est_cost, "suggested_items": suggested_items}
+        return {"status": "success", "message": "Multi-item AI Diagnostics completed successfully", "estimated_cost": 0.0 if doc.get("is_warranty_claim") else est_cost, "suggested_items": suggested_items}
 
     return {"status": "info", "message": "Multiple items already present on order"}
 
@@ -228,7 +232,6 @@ def check_server_health():
         if not settings.get("enable_health_check", 1):
             return
 
-        # Check database connectivity & recent error logs count
         recent_errors = frappe.db.count("Error Log", {"creation": [">", frappe.utils.add_hours(frappe.utils.now_datetime(), -24)]})
         if recent_errors > 25:
             frappe.log_error(f"High error count detected in past 24 hours: {recent_errors} errors.", "Server Health Warning")
