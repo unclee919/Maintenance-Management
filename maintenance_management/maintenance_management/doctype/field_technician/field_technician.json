@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:technician_name",
+ "creation": "2026-08-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "technician_name",
+  "user",
+  "phone",
+  "service_zone",
+  "status",
+  "current_location"
+ ],
+ "fields": [
+  {
+   "fieldname": "technician_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Technician Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "System User",
+   "options": "User"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "service_zone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Service Zone / Area"
+  },
+  {
+   "default": "Available",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Available\nBusy\nOffline"
+  },
+  {
+   "fieldname": "current_location",
+   "fieldtype": "Data",
+   "label": "Current GPS Location"
+  }
+ ],
+ "icon": "octicon octicon-person",
+ "idx": 1,
+ "links": [],
+ "modified": "2026-08-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "maintenance_management",
+ "name": "Field Technician",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

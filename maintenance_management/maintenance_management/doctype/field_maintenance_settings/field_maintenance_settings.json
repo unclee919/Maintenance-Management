@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "features_section",
+  "enable_gps_tracking",
+  "require_human_confirmation",
+  "enable_price_approval",
+  "enable_mobile_inventory",
+  "enable_customer_portal",
+  "column_break_1",
+  "auto_assign_technician",
+  "default_warranty_days"
+ ],
+ "fields": [
+  {
+   "fieldname": "features_section",
+   "fieldtype": "Section Break",
+   "label": "Optional Features & Toggles (Phase 1 / Phase 2)"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_gps_tracking",
+   "fieldtype": "Check",
+   "label": "Enable Live GPS Tracking & ETA"
+  },
+  {
+   "default": "1",
+   "fieldname": "require_human_confirmation",
+   "fieldtype": "Check",
+   "label": "Require Human Support Confirmation for New/Incomplete Requests"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_price_approval",
+   "fieldtype": "Check",
+   "label": "Require Customer Price Approval Before Execution"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_mobile_inventory",
+   "fieldtype": "Check",
+   "label": "Enable Mobile Inventory & Parts Consumption"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_customer_portal",
+   "fieldtype": "Check",
+   "label": "Enable Public Customer Portal & Tracking Link"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_assign_technician",
+   "fieldtype": "Check",
+   "label": "Auto-Assign Technician via Smart Dispatch"
+  },
+  {
+   "default": "30",
+   "fieldname": "default_warranty_days",
+   "fieldtype": "Int",
+   "label": "Default Warranty Period (Days)"
+  }
+ ],
+ "icon": "octicon octicon-settings",
+ "idx": 1,
+ "is_single": 1,
+ "links": [],
+ "modified": "2026-08-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "maintenance_management",
+ "name": "Field Maintenance Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
