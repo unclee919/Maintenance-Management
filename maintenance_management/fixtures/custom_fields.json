@@ -11,11 +11,21 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Order-equipment_serial_no",
+  "dt": "Sales Order",
+  "fieldname": "equipment_serial_no",
+  "fieldtype": "Data",
+  "insert_after": "equipment_type",
+  "label": "Equipment Serial No",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
   "name": "Sales Order-issue_description",
   "dt": "Sales Order",
   "fieldname": "issue_description",
   "fieldtype": "Text",
-  "insert_after": "equipment_type",
+  "insert_after": "equipment_serial_no",
   "label": "Issue Description",
   "module": "Maintenance Management"
  },
@@ -54,6 +64,38 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Order-sla_status",
+  "dt": "Sales Order",
+  "fieldname": "sla_status",
+  "fieldtype": "Select",
+  "insert_after": "scheduled_date_time",
+  "label": "SLA Status",
+  "options": "On Time\nWarning\nBreached",
+  "default": "On Time",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-customer_signature",
+  "dt": "Sales Order",
+  "fieldname": "customer_signature",
+  "fieldtype": "Signature",
+  "insert_after": "sla_status",
+  "label": "Customer Signature",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-service_photo",
+  "dt": "Sales Order",
+  "fieldname": "service_photo",
+  "fieldtype": "Attach Image",
+  "insert_after": "customer_signature",
+  "label": "Service Completion Photo",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
   "name": "Sales Invoice-feedback_score",
   "dt": "Sales Invoice",
   "fieldname": "feedback_score",
@@ -71,6 +113,27 @@
   "fieldtype": "Small Text",
   "insert_after": "feedback_score",
   "label": "Customer Comments / Review",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Field Technician-warehouse",
+  "dt": "Field Technician",
+  "fieldname": "warehouse",
+  "fieldtype": "Link",
+  "insert_after": "status",
+  "label": "Van Warehouse",
+  "options": "Warehouse",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Field Technician-specialty_equipment",
+  "dt": "Field Technician",
+  "fieldname": "specialty_equipment",
+  "fieldtype": "Data",
+  "insert_after": "warehouse",
+  "label": "Specialty Equipment Skill",
   "module": "Maintenance Management"
  }
 ]

