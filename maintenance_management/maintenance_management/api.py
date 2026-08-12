@@ -405,3 +405,17 @@ def check_technician_response_threshold(sales_order_name, response_time_mins):
         return {"alert_sent": True, "threshold": threshold, "actual": response_time_mins}
         
     return {"alert_sent": False}
+
+def sales_order_permission_query(user):
+    """Restricts Sales Order view for Field Technicians to only their assigned orders."""
+    if not user:
+        return ""
+    roles = frappe.get_roles(user)
+    if "Field Technician" in roles and "System Manager" not in roles and "Maintenance Manager" not in roles:
+        # Find technician profile linked to user
+        tech = frappe.db.get_value("Field Technician", {"user_id": user}, "name")
+        if tech:
+            return f"`tabSales Order`.custom_assigned_technician = '{tech}'"
+        else:
+            return "`tabSales Order`.custom_assigned_technician = 'NO_TECH_ASSIGNED'"
+    return ""

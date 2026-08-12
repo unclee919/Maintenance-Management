@@ -17,6 +17,10 @@ doc_events = {
     }
 }
 
+permission_query_conditions = {
+    "Sales Order": "maintenance_management.maintenance_management.api.sales_order_permission_query"
+}
+
 scheduler_events = {
     "daily": [
         "maintenance_management.controllers.sales_order.check_sla_escalations",
