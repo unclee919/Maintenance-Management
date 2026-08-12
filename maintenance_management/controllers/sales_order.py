@@ -56,8 +56,7 @@ def on_update(doc, method):
         trigger_webhook(doc, f"Status Changed to {doc.maintenance_status}")
 
         if doc.maintenance_status == "Completed":
-            # process_erpnext_integration(doc)
-            pass
+            process_erpnext_integration(doc)
 
 def auto_assign_tech(doc):
     tech = frappe.db.get_value("Field Technician", {"status": "Available"}, "name")
@@ -112,17 +111,15 @@ def process_erpnext_integration(doc):
                     })
                 se.insert(ignore_permissions=True)
                 se.submit()
-                frappe.logger().info(f"Created Stock Entry {se.name} for Sales Order {doc.name}")
+                frappe.logger().info(f"Created Stock Entry {se.name} for Sales Order {doc.name} from warehouse {warehouse}")
             except Exception as se_err:
                 import traceback
                 err_msg = f"Stock Entry Error: {str(se_err)}\n{traceback.format_exc()}"
                 frappe.log_error(err_msg, "Maintenance Stock Entry Error")
-                print(err_msg)
     except Exception as e:
         import traceback
         err_msg = f"ERPNext Integration Error: {str(e)}\n{traceback.format_exc()}"
         frappe.log_error(err_msg, "Maintenance ERPNext Error")
-        print(err_msg)
 
 @frappe.whitelist()
 def run_ai_diagnostics(sales_order_name):

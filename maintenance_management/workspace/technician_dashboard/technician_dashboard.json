@@ -1,0 +1,63 @@
+{
+ "category": "Modules",
+ "charts": [],
+ "custom_blocks": [],
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "tool",
+ "is_standard": 1,
+ "label": "Technician Dashboard",
+ "links": [
+  {
+   "dependencies": "",
+   "description": "View assigned service maintenance orders",
+   "hidden": 0,
+   "is_document_type": 1,
+   "label": "Assigned Service Orders",
+   "link_count": 0,
+   "link_type": "DocType",
+   "link": "Sales Order",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "description": "Manage field technician profiles and van warehouses",
+   "hidden": 0,
+   "is_document_type": 1,
+   "label": "Field Technicians",
+   "link_count": 0,
+   "link_type": "DocType",
+   "link": "Field Technician",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-12 00:00:00.000000",
+ "module": "Maintenance Management",
+ "name": "Technician Dashboard",
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Maintenance User"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "sequence_id": 1.0,
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "My Assigned Orders",
+   "link_to": "Sales Order",
+   "stats_filter": "{\"maintenance_status\": [\"in\", [\"Assigned\", \"Accepted\", \"In Progress\"]]}",
+   "type": "DocType"
+  }
+ ],
+ "title": "Technician Dashboard"
+}
