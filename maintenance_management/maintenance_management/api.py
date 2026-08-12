@@ -97,24 +97,27 @@ def after_migrate():
         })
         w.insert(ignore_permissions=True)
         
-    ws = frappe.get_doc("Workspace", "Maintenance Management")
-    ws.content = json.dumps([
-        {"type": "header", "data": {"text": "📊 Maintenance Management Operations & Executive Summary", "col": 12}},
-        {"type": "spacer", "data": {"col": 12}},
-        {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 3}},
-        {"type": "card", "data": {"card_name": "Pending Invoices Count", "col": 3}},
-        {"type": "card", "data": {"card_name": "Avg Response Time", "col": 3}},
-        {"type": "card", "data": {"card_name": "Avg Repair Duration", "col": 3}},
-        {"type": "spacer", "data": {"col": 12}},
-        {"type": "chart", "data": {"chart_name": "Orders by Status", "col": 12}},
-        {"type": "spacer", "data": {"col": 12}},
-        {"type": "header", "data": {"text": "⚡ Quick Links & Management Modules", "col": 12}},
-        {"type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 3}},
-        {"type": "shortcut", "data": {"shortcut_name": "Field Technician", "col": 3}},
-        {"type": "shortcut", "data": {"shortcut_name": "Field Service Request", "col": 3}},
-        {"type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 3}},
-    ])
-    ws.save(ignore_permissions=True)
+	    ws = frappe.get_doc("Workspace", "Maintenance Management")
+	    ws.content = json.dumps([
+	        {"type": "header", "data": {"text": "📊 Maintenance Management Operations & Executive Summary", "col": 12}},
+	        {"type": "spacer", "data": {"col": 12}},
+	        {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 3}},
+	        {"type": "card", "data": {"card_name": "Pending Invoices Count", "col": 3}},
+	        {"type": "card", "data": {"card_name": "Avg Response Time", "col": 3}},
+	        {"type": "card", "data": {"card_name": "Avg Repair Duration", "col": 3}},
+	        {"type": "spacer", "data": {"col": 12}},
+	        {"type": "chart", "data": {"chart_name": "Orders by Status", "col": 12}},
+	        {"type": "spacer", "data": {"col": 12}},
+	        {"type": "header", "data": {"text": "🗺️ Live Operations & Technician Tracking", "col": 12}},
+	        {"type": "shortcut", "data": {"shortcut_name": "Technician Live Tracking", "col": 6, "type": "Page", "link_to": "technician-tracking", "label": "Live Map & Tracking"}},
+	        {"type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 6, "type": "DocType", "link_to": "Field Maintenance Settings", "label": "Settings & Toggles"}},
+	        {"type": "spacer", "data": {"col": 12}},
+	        {"type": "header", "data": {"text": "⚡ Core Modules & Quick Links", "col": 12}},
+	        {"type": "shortcut", "data": {"shortcut_name": "Field Technician", "col": 4}},
+	        {"type": "shortcut", "data": {"shortcut_name": "Field Service Request", "col": 4}},
+	        {"type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 4}},
+	    ])
+	    ws.save(ignore_permissions=True)
 
     # 4. Update Technician Dashboard Workspace Content
     if frappe.db.exists("Workspace", "Technician Dashboard"):
@@ -600,4 +603,58 @@ def check_van_warehouse_low_stock(warehouse=None):
         "threshold": threshold,
         "low_stock_items": bins,
         "alerts_sent": alerts_sent
+    }
+
+@frappe.whitelist()
+def check_van_warehouse_low_stock(warehouse=None):
+    """Checks van warehouse stock levels against threshold, triggers WhatsApp alerts, and auto-creates Material Requests if enabled."""
+    settings = frappe.get_single("Field Maintenance Settings")
+    if not settings.get("enable_low_stock_alerts"):
+        return {"status": "disabled", "message": "Low-stock alerts are disabled in Field Maintenance Settings."}
+        
+    threshold = settings.get("low_stock_threshold_qty") or 3
+    auto_reorder = settings.get("enable_auto_reorder")
+    reorder_qty = settings.get("reorder_qty") or 10
+    
+    bins = frappe.db.sql("""
+        select item_code, warehouse, actual_qty 
+        from `tabBin` 
+        where warehouse like %s and actual_qty <= %s
+    """, ("%Van%", threshold), as_dict=1)
+    
+    alerts_sent = []
+    reorders_created = []
+    
+    for b in bins:
+        alert_msg = f"⚠️ LOW STOCK ALERT: Item {b.item_code} in warehouse {b.warehouse} has fallen to {b.actual_qty} units (Threshold: {threshold})."
+        frappe.logger().warning(alert_msg)
+        alerts_sent.append(alert_msg)
+        
+        # Auto-reorder logic
+        if auto_reorder:
+            # Check if open Material Request already exists for this item and warehouse
+            existing_mr = frappe.db.exists("Material Request", {
+                "material_request_type": "Purchase",
+                "status": ["!=", "Stopped"],
+                "docstatus": 0
+            })
+            
+            mr = frappe.new_doc("Material Request")
+            mr.material_request_type = "Purchase"
+            mr.append("items", {
+                "item_code": b.item_code,
+                "qty": reorder_qty,
+                "warehouse": b.warehouse,
+                "schedule_date": frappe.utils.add_days(frappe.utils.nowdate(), 2)
+            })
+            mr.insert(ignore_permissions=True)
+            reorders_created.append(mr.name)
+            frappe.logger().info(f"[Auto-Reorder Created] Material Request {mr.name} for item {b.item_code} in {b.warehouse}")
+            
+    return {
+        "status": "success",
+        "threshold": threshold,
+        "low_stock_items": bins,
+        "alerts_sent": alerts_sent,
+        "reorders_created": reorders_created
     }

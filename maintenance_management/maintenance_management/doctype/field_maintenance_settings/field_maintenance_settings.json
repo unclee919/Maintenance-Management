@@ -148,13 +148,25 @@
 			   "fieldtype": "Check",
 			   "label": "Enable Van Warehouse Low-Stock WhatsApp Alerts"
 			  },
-			  {
-			   "default": "3",
-			   "fieldname": "low_stock_threshold_qty",
-			   "fieldtype": "Int",
-			   "label": "Low-Stock Alert Threshold Quantity"
-			  }
-			 ],
+				  {
+				   "default": "3",
+				   "fieldname": "low_stock_threshold_qty",
+				   "fieldtype": "Int",
+				   "label": "Low-Stock Alert Threshold Quantity"
+				  },
+				  {
+				   "default": "1",
+				   "fieldname": "enable_auto_reorder",
+				   "fieldtype": "Check",
+				   "label": "Enable Automatic Material Request on Low-Stock"
+				  },
+				  {
+				   "default": "10",
+				   "fieldname": "reorder_qty",
+				   "fieldtype": "Int",
+				   "label": "Default Reorder Quantity"
+				  }
+				 ],
  "icon": "octicon octicon-settings",
  "idx": 1,
  "is_single": 1,
