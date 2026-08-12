@@ -99,12 +99,14 @@ class FieldServiceRequest(Document):
                         "item_code": p.item_code,
                         "qty": p.qty,
                         "basic_rate": p.rate,
+                        "valuation_rate": p.rate,
                         "s_warehouse": warehouse
                     })
                 if se_items:
                     se = frappe.get_doc({
                         "doctype": "Stock Entry",
                         "stock_entry_type": "Material Issue",
+                        "allow_zero_valuation_rate": 1,
                         "remarks": f"Service Request: {self.name}",
                         "items": se_items
                     })
@@ -156,7 +158,7 @@ class FieldServiceRequest(Document):
                     inv.submit()
                     frappe.logger().info(f"Created Sales Invoice {inv.name} for Service Request {self.name}")
         except Exception as e:
-            frappe.log_error(f"ERPNext Integration Error: {str(e)}", "Maintenance ERPNext Error")
+            frappe.log_error(f"ERPNext Integration Error: {str(e)}", "Maintenance ERP")
 
     @frappe.whitelist()
     def run_ai_diagnostics(self):
