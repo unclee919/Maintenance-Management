@@ -16,7 +16,3 @@ doc_events = {
         "validate": "maintenance_management.controllers.sales_invoice.validate"
     }
 }
-
-fixtures = [
-    {"dt": "Custom Field", "filters": [["module", "=", "Maintenance Management"]]}
-]
