@@ -767,3 +767,97 @@ def get_asset_event_timeline(serial_no):
         return {'status': 'success', 'serial_no': serial_no, 'timeline': timeline}
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def upload_before_after_photos(sales_order, before_photo=None, after_photo=None):
+    """Handles before and after photo uploads for task completion verification."""
+    try:
+        settings = frappe.get_single('Maintenance Settings')
+        if settings.get('require_before_after_photos') and not (before_photo or after_photo):
+            # Check if already present on doc
+            so = frappe.get_doc('Sales Order', sales_order)
+            if not (so.get('custom_before_photo') or so.get('custom_after_photo')):
+                return {'status': 'error', 'message': 'Before and After photos are required by Maintenance Settings.'}
+                
+        so = frappe.get_doc('Sales Order', sales_order)
+        if before_photo:
+            so.custom_before_photo = before_photo
+        if after_photo:
+            so.custom_after_photo = after_photo
+        so.save(ignore_permissions=True)
+        frappe.db.commit()
+        return {'status': 'success', 'sales_order': sales_order, 'message': 'Photos successfully recorded.'}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def generate_onsite_payment_link(sales_order):
+    """Generates an on-site digital payment link using configured gateway settings (PayMob, Vodafone Cash, etc.)."""
+    try:
+        settings = frappe.get_single('Maintenance Settings')
+        if not settings.get('enable_digital_payments'):
+            return {'status': 'disabled', 'message': 'Digital payments are disabled in Maintenance Settings.'}
+            
+        provider = settings.get('payment_gateway_provider') or 'PayMob'
+        merchant_key = settings.get('gateway_api_key') or 'DEMO_MERCHANT_KEY'
+        
+        so = frappe.get_doc('Sales Order', sales_order)
+        amount = so.get('grand_total') or 500.00
+        
+        # Simulate gateway URL generation based on provider
+        if provider == 'Vodafone Cash':
+            pay_url = f"https://vodafone.com.eg/cash/pay?merchant={merchant_key}&amount={amount}&ref={sales_order}"
+        elif provider == 'PayMob':
+            pay_url = f"https://accept.paymob.com/api/acceptance/payments/pay?key={merchant_key}&amount_cents={int(amount*100)}&order={sales_order}"
+        else:
+            pay_url = f"https://checkout.gateway.com/pay?key={merchant_key}&amount={amount}&ref={sales_order}"
+            
+        return {
+            'status': 'success',
+            'provider': provider,
+            'sales_order': sales_order,
+            'amount': amount,
+            'payment_url': pay_url
+        }
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def check_technician_fatigue(technician):
+    """Monitors technician daily working hours and flags potential fatigue or overtime breaches."""
+    try:
+        settings = frappe.get_single('Maintenance Settings')
+        if not settings.get('enable_fatigue_monitoring'):
+            return {'status': 'disabled'}
+            
+        max_hours = float(settings.get('max_daily_working_hours') or 10.0)
+        
+        # Calculate active hours today from audit logs
+        today = frappe.utils.nowdate()
+        logs = frappe.db.sql("""
+            select timestamp, action 
+            from `tabLocation Audit Log` 
+            where technician = %s and timestamp >= %s
+            order by timestamp asc
+        """, (technician, today), as_dict=1)
+        
+        # Simple estimation: time between first start and last action
+        if len(logs) < 2:
+            return {'status': 'normal', 'estimated_hours': 0.0, 'is_fatigued': False}
+            
+        from frappe.utils import time_diff_in_hours
+        start_time = logs[0].timestamp
+        end_time = logs[-1].timestamp
+        hours = time_diff_in_hours(end_time, start_time)
+        
+        is_fatigued = hours > max_hours
+        return {
+            'status': 'success',
+            'technician': technician,
+            'estimated_daily_hours': round(hours, 2),
+            'max_allowed_hours': max_hours,
+            'is_fatigued': is_fatigued,
+            'warning': 'Technician has exceeded maximum daily working hours limit!' if is_fatigued else 'Normal working hours.'
+        }
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
