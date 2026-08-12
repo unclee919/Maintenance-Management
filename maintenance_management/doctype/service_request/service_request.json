@@ -1,0 +1,173 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "SR-.YYYY.-.#####",
+ "creation": "2026-08-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "customer_section",
+  "customer_name",
+  "customer_phone",
+  "customer_address",
+  "latitude",
+  "longitude",
+  "column_break_sr1",
+  "device_type",
+  "brand",
+  "issue_description",
+  "source",
+  "workflow_section",
+  "status",
+  "technician",
+  "column_break_sr2",
+  "estimated_price",
+  "final_price",
+  "payment_status",
+  "warranty_days"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer_section",
+   "fieldtype": "Section Break",
+   "label": "Customer & Equipment Details"
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer_phone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer Phone (WhatsApp)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer_address",
+   "fieldtype": "Small Text",
+   "label": "Customer Address / Location"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Float",
+   "label": "Latitude"
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Float",
+   "label": "Longitude"
+  },
+  {
+   "fieldname": "column_break_sr1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "device_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Device / Appliance Type"
+  },
+  {
+   "fieldname": "brand",
+   "fieldtype": "Data",
+   "label": "Brand"
+  },
+  {
+   "fieldname": "issue_description",
+   "fieldtype": "Text",
+   "label": "Issue Description / Notes"
+  },
+  {
+   "default": "WhatsApp",
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Request Source",
+   "options": "WhatsApp\nWeb Booking\nManual Desk\nTechnician"
+  },
+  {
+   "fieldname": "workflow_section",
+   "fieldtype": "Section Break",
+   "label": "Workflow & Status"
+  },
+  {
+   "default": "New",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "New\nPending Correction\nPending Confirmation\nAssigned\nAccepted\nIn Progress\nWaiting for Part\nWaiting for Price Approval\nCompleted\nCancelled\nUnder Warranty (Reopened)"
+  },
+  {
+   "fieldname": "technician",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assigned Technician",
+   "options": "Technician"
+  },
+  {
+   "fieldname": "column_break_sr2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "estimated_price",
+   "fieldtype": "Currency",
+   "label": "Estimated Price"
+  },
+  {
+   "fieldname": "final_price",
+   "fieldtype": "Currency",
+   "label": "Final Price"
+  },
+  {
+   "default": "Unpaid",
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Payment Status",
+   "options": "Unpaid\nPaid Cash\nPaid Bank Transfer"
+  },
+  {
+   "default": "30",
+   "fieldname": "warranty_days",
+   "fieldtype": "Int",
+   "label": "Warranty Period (Days)"
+  }
+ ],
+ "icon": "octicon octicon-tasklist",
+ "idx": 1,
+ "is_submittable": 0,
+ "links": [],
+ "modified": "2026-08-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Maintenance Management",
+ "name": "Service Request",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Maintenance Technician",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Support Team",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
