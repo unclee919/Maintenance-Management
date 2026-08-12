@@ -1,65 +1,12 @@
 [
  {
   "doctype": "Custom Field",
-  "name": "Sales Order-equipment_type",
-  "dt": "Sales Order",
-  "fieldname": "equipment_type",
-  "fieldtype": "Data",
-  "insert_after": "customer",
-  "label": "Equipment Type (e.g. AC, Chiller)",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
   "name": "Sales Order-equipment_serial_no",
   "dt": "Sales Order",
   "fieldname": "equipment_serial_no",
   "fieldtype": "Data",
   "insert_after": "equipment_type",
   "label": "Equipment Serial No",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-issue_description",
-  "dt": "Sales Order",
-  "fieldname": "issue_description",
-  "fieldtype": "Text",
-  "insert_after": "equipment_serial_no",
-  "label": "Issue Description",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-maintenance_status",
-  "dt": "Sales Order",
-  "fieldname": "maintenance_status",
-  "fieldtype": "Select",
-  "insert_after": "issue_description",
-  "label": "Maintenance Status",
-  "options": "New\nPending Confirmation\nAssigned\nAccepted\nIn Progress\nWaiting for Part\nWaiting for Price Approval\nCompleted\nCancelled",
-  "default": "New",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-technician",
-  "dt": "Sales Order",
-  "fieldname": "technician",
-  "fieldtype": "Link",
-  "insert_after": "maintenance_status",
-  "label": "Assigned Technician",
-  "options": "Field Technician",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-scheduled_date_time",
-  "dt": "Sales Order",
-  "fieldname": "scheduled_date_time",
-  "fieldtype": "Datetime",
-  "insert_after": "technician",
-  "label": "Scheduled Date & Time",
   "module": "Maintenance Management"
  },
  {
@@ -92,38 +39,6 @@
   "fieldtype": "Attach Image",
   "insert_after": "customer_signature",
   "label": "Service Completion Photo",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Invoice-feedback_score",
-  "dt": "Sales Invoice",
-  "fieldname": "feedback_score",
-  "fieldtype": "Select",
-  "insert_after": "customer",
-  "label": "Feedback Score",
-  "options": "5 - Excellent\n4 - Very Good\n3 - Good\n2 - Fair\n1 - Poor",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Invoice-customer_feedback",
-  "dt": "Sales Invoice",
-  "fieldname": "customer_feedback",
-  "fieldtype": "Small Text",
-  "insert_after": "feedback_score",
-  "label": "Customer Comments / Review",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Field Technician-warehouse",
-  "dt": "Field Technician",
-  "fieldname": "warehouse",
-  "fieldtype": "Link",
-  "insert_after": "status",
-  "label": "Van Warehouse",
-  "options": "Warehouse",
   "module": "Maintenance Management"
  },
  {
