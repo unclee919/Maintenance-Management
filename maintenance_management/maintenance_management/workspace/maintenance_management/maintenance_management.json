@@ -10,7 +10,6 @@
  "hide_custom": 0,
  "icon": "settings",
  "indicator_color": "",
- "is_standard": 1,
  "label": "Maintenance Management",
  "links": [
   {
@@ -46,7 +45,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-12 13:00:00.000000",
+ "modified": "2026-08-12 13:13:00.000000",
  "modified_by": "Administrator",
  "module": "Maintenance Management",
  "name": "Maintenance Management",
