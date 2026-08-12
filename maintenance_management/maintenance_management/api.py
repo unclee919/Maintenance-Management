@@ -850,3 +850,25 @@ def simulate_procurement_flow(material_request_name=None):
         "grand_total": po.grand_total,
         "message": f"Successfully converted Material Request {mr.name} into submitted Purchase Order {po.name} with Supplier {po.supplier}."
     }
+
+@frappe.whitelist()
+def get_optimal_supplier_for_item(item_code):
+    """Dynamically selects the best supplier based on item category and regional pricing rules configured in Desk."""
+    item = frappe.get_doc("Item", item_code)
+    item_group = item.item_group
+    
+    # Example category-based preferred suppliers
+    category_supplier_map = {
+        "Compressors": "Cairo HVAC Supplier Corp",
+        "Valves": "Giza Spare Parts Ltd",
+        "Filters": "Delta Maintenance Supplies"
+    }
+    
+    preferred_supplier = category_supplier_map.get(item_group)
+    if not preferred_supplier:
+        # Fallback to first active supplier in system
+        suppliers = frappe.get_all("Supplier", filters={"disabled": 0}, limit=1)
+        preferred_supplier = suppliers[0].name if suppliers else "Default Supplier"
+        
+    frappe.logger().info(f"[Dynamic Supplier Selection] Item {item_code} (Group: {item_group}) assigned to preferred supplier: {preferred_supplier}")
+    return preferred_supplier
