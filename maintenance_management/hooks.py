@@ -27,3 +27,5 @@ scheduler_events = {
 }
 
 app_include_css = "/assets/maintenance_management/css/mobile_enhancements.css"
+
+after_migrate = "maintenance_management.maintenance_management.api.after_migrate"
