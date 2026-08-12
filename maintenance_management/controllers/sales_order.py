@@ -184,5 +184,6 @@ def check_sla_escalations():
         for order in stuck_orders:
             frappe.logger().warning(f"SLA Escalation Alert: Order {order.name} for customer {order.customer} assigned to {order.technician} has been stuck since {order.modified}")
             frappe.log_error(f"Order {order.name} is overdue for completion.", "Maintenance SLA Escalation")
+        frappe.db.commit()
     except Exception as e:
         frappe.log_error(f"SLA Check Error: {str(e)}", "Maintenance SLA Error")
