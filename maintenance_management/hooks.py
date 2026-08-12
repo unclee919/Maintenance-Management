@@ -6,8 +6,8 @@ app_email = "support@manus.im"
 app_license = "mit"
 
 doc_events = {
-    "Service Request": {
-        "before_save": "maintenance_management.doctype.service_request.service_request.before_save",
-        "after_insert": "maintenance_management.doctype.service_request.service_request.after_insert"
+    "Field Service Request": {
+        "before_save": "maintenance_management.doctype.field_service_request.field_service_request.before_save",
+        "after_insert": "maintenance_management.doctype.field_service_request.field_service_request.after_insert"
     }
 }

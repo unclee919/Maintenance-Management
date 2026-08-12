@@ -10,12 +10,8 @@
   "user",
   "phone",
   "service_zone",
-  "column_break_tech",
   "status",
-  "current_latitude",
-  "current_longitude",
-  "skills_section",
-  "skills"
+  "current_location"
  ],
  "fields": [
   {
@@ -23,7 +19,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Technician Name",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "user",
@@ -34,18 +31,13 @@
   {
    "fieldname": "phone",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Phone Number"
+   "label": "Phone"
   },
   {
    "fieldname": "service_zone",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Service Zone / Area"
-  },
-  {
-   "fieldname": "column_break_tech",
-   "fieldtype": "Column Break"
   },
   {
    "default": "Available",
@@ -56,34 +48,18 @@
    "options": "Available\nBusy\nOffline"
   },
   {
-   "fieldname": "current_latitude",
-   "fieldtype": "Float",
-   "label": "Current Latitude"
-  },
-  {
-   "fieldname": "current_longitude",
-   "fieldtype": "Float",
-   "label": "Current Longitude"
-  },
-  {
-   "fieldname": "skills_section",
-   "fieldtype": "Section Break",
-   "label": "Skills & Specialization"
-  },
-  {
-   "fieldname": "skills",
-   "fieldtype": "Small Text",
-   "label": "Specialized Appliance Types (Comma separated)"
+   "fieldname": "current_location",
+   "fieldtype": "Data",
+   "label": "Current GPS Location"
   }
  ],
- "icon": "octicon octicon-tools",
+ "icon": "octicon octicon-person",
  "idx": 1,
- "is_submittable": 0,
  "links": [],
  "modified": "2026-08-12 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Maintenance Management",
- "name": "Technician",
+ "name": "Field Technician",
  "owner": "Administrator",
  "permissions": [
   {
@@ -91,12 +67,6 @@
    "delete": 1,
    "read": 1,
    "role": "System Manager",
-   "write": 1
-  },
-  {
-   "create": 1,
-   "read": 1,
-   "role": "Maintenance Technician",
    "write": 1
   }
  ],

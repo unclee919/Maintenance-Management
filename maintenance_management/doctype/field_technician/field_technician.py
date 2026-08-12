@@ -4,5 +4,5 @@
 
 from frappe.model.document import Document
 
-class MaintenanceSettings(Document):
+class FieldTechnician(Document):
     pass
