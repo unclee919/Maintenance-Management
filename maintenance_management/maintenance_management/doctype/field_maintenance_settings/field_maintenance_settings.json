@@ -171,6 +171,18 @@
 				   "fieldname": "enable_forecast_auto_po",
 				   "fieldtype": "Check",
 				   "label": "Enable Auto-Purchase Order when 7-Day Forecast Exceeds Stock"
+				  },
+				  {
+				   "default": "1",
+				   "fieldname": "enable_daily_utilization_report",
+				   "fieldtype": "Check",
+				   "label": "Enable Automated Daily Technician Utilization Report"
+				  },
+				  {
+				   "default": "supervisors@elmrkz.cloud",
+				   "fieldname": "utilization_report_email",
+				   "fieldtype": "Data",
+				   "label": "Supervisor Report Email / WhatsApp Group"
 				  }
 				 ],
  "icon": "octicon octicon-settings",

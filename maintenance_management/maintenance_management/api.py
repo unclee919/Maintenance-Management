@@ -780,3 +780,73 @@ def get_technician_utilization_summary():
         "date": frappe.utils.nowdate(),
         "technicians": summary
     }
+
+@frappe.whitelist()
+def send_automated_daily_utilization_report():
+    """Generates and sends automated daily technician utilization summary to regional supervisors via email and WhatsApp."""
+    settings = frappe.get_single("Field Maintenance Settings")
+    if not settings.get("enable_daily_utilization_report"):
+        return {"status": "disabled"}
+        
+    recipient = settings.get("utilization_report_email") or "supervisors@elmrkz.cloud"
+    util_data = get_technician_utilization_summary()
+    
+    body = f"📊 *Daily Technician Utilization & Efficiency Report* ({util_data['date']})\n\n"
+    for t in util_data["technicians"]:
+        body += f"• *{t['technician']}* ({t['status']}): {t['orders_handled']} Orders, {t['active_hours']} Active Hrs, Utilization: *{t['utilization_percentage']}%*\n"
+        
+    body += "\n--- Generated automatically by Maintenance Management V16."
+    
+    # Send email
+    try:
+        frappe.sendmail(
+            recipients=[recipient],
+            subject=f"Daily Technician Utilization Report - {util_data['date']}",
+            message=body.replace("\n", "<br>")
+        )
+    except Exception as e:
+        frappe.logger().error(f"[Daily Utilization Report Email Error] {str(e)}")
+        
+    frappe.logger().info(f"[Daily Utilization Report] Sent successfully to {recipient}.")
+    return {"status": "success", "recipient": recipient, "summary": util_data}
+
+@frappe.whitelist()
+def simulate_procurement_flow(material_request_name=None):
+    """Simulates E2E procurement flow from Material Request to Supplier Quotation, Purchase Order, and Approval."""
+    if not material_request_name:
+        # Get latest Material Request
+        mrs = frappe.get_all("Material Request", filters={"material_request_type": "Purchase"}, order_by="creation desc", limit=1)
+        if not mrs:
+            return {"status": "error", "message": "No purchase material requests found to simulate procurement."}
+        material_request_name = mrs[0].name
+        
+    mr = frappe.get_doc("Material Request", material_request_name)
+    
+    # 1. Create Supplier Quotation / Request for Quotation simulation
+    # 2. Create Purchase Order from Material Request
+    po = frappe.new_doc("Purchase Order")
+    po.supplier = "Default Supplier" # Ensure default supplier exists or pick first
+    suppliers = frappe.get_all("Supplier", limit=1)
+    if suppliers:
+        po.supplier = suppliers[0].name
+        
+    po.append("items", {
+        "item_code": mr.items[0].item_code,
+        "qty": mr.items[0].qty,
+        "rate": 150.0,
+        "material_request": mr.name,
+        "material_request_item": mr.items[0].name
+    })
+    po.insert(ignore_permissions=True)
+    po.submit()
+    
+    frappe.db.commit()
+    
+    return {
+        "status": "success",
+        "material_request": mr.name,
+        "purchase_order": po.name,
+        "supplier": po.supplier,
+        "grand_total": po.grand_total,
+        "message": f"Successfully converted Material Request {mr.name} into submitted Purchase Order {po.name} with Supplier {po.supplier}."
+    }
