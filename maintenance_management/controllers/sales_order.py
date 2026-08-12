@@ -118,12 +118,25 @@ def process_erpnext_integration(doc):
                 se.submit()
                 frappe.logger().info(f"Created Stock Entry {se.name} for Sales Order {doc.name}")
 
-        # Create Sales Invoice from Sales Order
+        # Create Sales Invoice from Sales Order manually to avoid version mismatch in make_sales_invoice
         if frappe.db.exists("DocType", "Sales Invoice"):
             existing_invoice = frappe.db.get_value("Sales Invoice", {"sales_order": doc.name}, "name")
             if not existing_invoice:
-                from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice
-                inv = make_sales_invoice(doc.name)
+                inv_items = []
+                for item in doc.get("items") or []:
+                    inv_items.append({
+                        "item_code": item.item_code,
+                        "qty": item.qty,
+                        "rate": item.rate,
+                        "so_detail": item.name,
+                        "sales_order": doc.name
+                    })
+                inv = frappe.get_doc({
+                    "doctype": "Sales Invoice",
+                    "customer": doc.customer,
+                    "sales_order": doc.name,
+                    "items": inv_items
+                })
                 inv.insert(ignore_permissions=True)
                 inv.submit()
                 frappe.logger().info(f"Created Sales Invoice {inv.name} for Sales Order {doc.name}")
