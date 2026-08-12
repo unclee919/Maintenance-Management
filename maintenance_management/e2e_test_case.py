@@ -52,8 +52,9 @@ try:
     # Run AI Diagnostics to auto-recommend parts and pricing
     diag_res = doc.run_ai_diagnostics()
     print("AI Diagnostics Result:", diag_res)
-    print(f"Parts Consumed Count: {len(doc.get('parts_consumed') or [])}")
-    for p in doc.get("parts_consumed") or []:
+    parts = doc.get("parts_consumed") or []
+    print(f"Parts Consumed Count: {len(parts)}")
+    for p in parts:
         print(f" - Part: {p.item_code}, Qty: {p.qty}, Rate: {p.rate}, Amount: {p.amount}")
     print(f"Total Amount: {doc.total_amount}")
 
