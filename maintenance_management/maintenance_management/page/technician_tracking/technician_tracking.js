@@ -59,6 +59,16 @@ frappe.pages['technician-tracking'].on_page_load = function(wrapper) {
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white"><strong>⭐ Supplier Performance Ratings (On-Time Delivery & Fulfillment)</strong></div>
+                        <div class="card-body" id="supplier-perf-container">
+                            <p>Loading supplier performance metrics...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card">
                 <div class="card-header bg-secondary text-white"><strong>🗺️ Live Map Overlay, Technician Routes & Geofence Boundaries (Cairo / Giza)</strong></div>
                 <div class="card-body" style="background: #ffffff;">
@@ -254,6 +264,40 @@ setTimeout(load_utilization, 1200);
                 });
                 html += `</tbody></table></div>`;
                 $('#expenditure-container').html(html);
+            }
+        }
+    });
+
+    // Load Supplier Performance Ratings
+    frappe.call({
+        method: "maintenance_management.maintenance_management.api.get_supplier_performance_ratings",
+        callback: function(r) {
+            if(r.message && r.message.status === "success") {
+                let suppliers = r.message.suppliers;
+                let html = `<div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Supplier Name</th>
+                                <th>Category / Speciality</th>
+                                <th>On-Time Delivery (%)</th>
+                                <th>Fulfillment Rate (%)</th>
+                                <th>Performance Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                suppliers.forEach(s => {
+                    let deliveryBadge = s.on_time_delivery_pct >= 95 ? '<span class="badge badge-success">' + s.on_time_delivery_pct + '%</span>' : '<span class="badge badge-warning">' + s.on_time_delivery_pct + '%</span>';
+                    html += `<tr>
+                        <td><strong>${s.supplier}</strong></td>
+                        <td>${s.category}</td>
+                        <td>${deliveryBadge}</td>
+                        <td>${s.fulfillment_rate_pct}%</td>
+                        <td><span class="text-warning font-weight-bold">${s.rating}</span></td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+                $('#supplier-perf-container').html(html);
             }
         }
     });

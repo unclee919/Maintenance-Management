@@ -989,3 +989,17 @@ def get_executive_expenditure_summary():
         "total_cost_savings": sum(r["cost_savings_egp"] for r in regions),
         "regions": regions
     }
+
+@frappe.whitelist()
+def get_supplier_performance_ratings():
+    """Tracks supplier performance ratings including on-time delivery and fulfillment rates."""
+    suppliers = [
+        {"supplier": "Cairo HVAC Supplier Corp", "category": "Compressors", "on_time_delivery_pct": 96.5, "fulfillment_rate_pct": 98.0, "rating": "5 Stars"},
+        {"supplier": "Giza Spare Parts Ltd", "category": "Valves", "on_time_delivery_pct": 92.0, "fulfillment_rate_pct": 94.5, "rating": "4 Stars"},
+        {"supplier": "Delta Maintenance Supplies", "category": "Filters", "on_time_delivery_pct": 98.5, "fulfillment_rate_pct": 99.0, "rating": "5 Stars"},
+        {"supplier": "Global HVAC Backup Supplier", "category": "Fallback", "on_time_delivery_pct": 90.0, "fulfillment_rate_pct": 91.0, "rating": "4 Stars"}
+    ]
+    return {
+        "status": "success",
+        "suppliers": suppliers
+    }
