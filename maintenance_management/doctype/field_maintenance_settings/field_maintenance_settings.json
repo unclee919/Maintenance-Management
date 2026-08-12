@@ -13,7 +13,9 @@
   "enable_customer_portal",
   "column_break_1",
   "auto_assign_technician",
-  "default_warranty_days"
+  "default_warranty_days",
+  "integration_section",
+  "webhook_url"
  ],
  "fields": [
   {
@@ -66,6 +68,16 @@
    "fieldname": "default_warranty_days",
    "fieldtype": "Int",
    "label": "Default Warranty Period (Days)"
+  },
+  {
+   "fieldname": "integration_section",
+   "fieldtype": "Section Break",
+   "label": "Integrations & Automation"
+  },
+  {
+   "fieldname": "webhook_url",
+   "fieldtype": "Data",
+   "label": "n8n / External Webhook URL for Outbound Events"
   }
  ],
  "icon": "octicon octicon-settings",
