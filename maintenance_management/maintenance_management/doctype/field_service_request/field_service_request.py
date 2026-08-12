@@ -85,6 +85,12 @@ class FieldServiceRequest(Document):
 
     def process_erpnext_integration(self):
         try:
+            warehouse = "Stores - EM"
+            if not frappe.db.exists("Warehouse", warehouse):
+                wh = frappe.db.get_value("Warehouse", {"is_group": 0}, "name")
+                if wh:
+                    warehouse = wh
+
             # 1. Create Stock Entry (Material Issue) for consumed parts
             if frappe.db.exists("DocType", "Stock Entry") and self.get("parts_consumed"):
                 se_items = []
@@ -93,7 +99,7 @@ class FieldServiceRequest(Document):
                         "item_code": p.item_code,
                         "qty": p.qty,
                         "basic_rate": p.rate,
-                        "s_warehouse": "Stores - E"
+                        "s_warehouse": warehouse
                     })
                 if se_items:
                     se = frappe.get_doc({
@@ -165,7 +171,7 @@ class FieldServiceRequest(Document):
             suggested_parts.append({"item_code": "Drain Pipe Valve", "qty": 1, "rate": 25.0})
             est_cost = 80.0
         elif "noise" in desc or "motor" in desc:
-            suggested_parts.append({"item_code": "Fan Motor Bearing", "Qty": 1, "rate": 75.0})
+            suggested_parts.append({"item_code": "Fan Motor Bearing", "qty": 1, "rate": 75.0})
             est_cost = 200.0
         else:
             suggested_parts.append({"item_code": "General Diagnostic Kit", "qty": 1, "rate": 40.0})
