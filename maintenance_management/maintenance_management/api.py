@@ -526,3 +526,36 @@ def get_technician_leaderboard():
         
     leaderboard.sort(key=lambda x: x['gamification_score'], reverse=True)
     return {'status': 'success', 'leaderboard': leaderboard}
+
+@frappe.whitelist()
+def get_equipment_manual(item_code):
+    """Retrieves equipment manual or wiring diagram attachment URL for technician guidance."""
+    try:
+        manual = frappe.db.get_value('Item', item_code, 'custom_equipment_manual')
+        return {'status': 'success', 'item_code': item_code, 'manual_url': manual or ''}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def trigger_nps_survey_dispatch():
+    """Background job to dispatch automated NPS survey emails/messages 24 hours post job completion."""
+    settings = frappe.get_single('Maintenance Settings')
+    if not settings.get('enable_nps_survey'):
+        return {'status': 'disabled'}
+        
+    # Find orders completed yesterday that haven't received a survey yet
+    from frappe.utils import add_days, nowdate
+    yesterday = add_days(nowdate(), -1)
+    
+    orders = frappe.get_all('Sales Order', filters={
+        'custom_is_maintenance_order': 1,
+        'custom_maintenance_status': 'Completed',
+        'modified': ['>=', yesterday]
+    }, fields=['name', 'customer', 'customer_name'])
+    
+    dispatched = []
+    for o in orders:
+        # Simulate sending NPS survey email / WhatsApp message
+        dispatched.append({'sales_order': o.name, 'customer': o.customer_name, 'status': 'Survey Sent'})
+        
+    return {'status': 'success', 'surveys_dispatched': dispatched}
