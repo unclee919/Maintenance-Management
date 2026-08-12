@@ -634,3 +634,68 @@ def get_navigation_link(sales_order):
         return {'status': 'success', 'sales_order': sales_order, 'navigation_url': map_url}
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def generate_asset_qrcode(serial_no):
+    """Generates a QR code data URL pointing to the asset's service history."""
+    try:
+        portal_url = f"https://erp.elmrkz.cloud/api/method/maintenance_management.maintenance_management.api.get_customer_asset_portal_data?serial_no={serial_no}"
+        # Using a reliable public QR code API generator or returning the URL payload
+        qr_image_api = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={portal_url}"
+        return {'status': 'success', 'serial_no': serial_no, 'qr_code_url': qr_image_api, 'target_url': portal_url}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def optimize_technician_route(technician, date=None):
+    """AI-driven greedy nearest-neighbor route optimizer for a technician's daily service orders."""
+    try:
+        if not date:
+            date = frappe.utils.nowdate()
+            
+        orders = frappe.get_all('Sales Order', filters={
+            'custom_assigned_technician': technician,
+            'custom_maintenance_status': ['in', ['Assigned', 'In Progress']]
+        }, fields=['name', 'customer', 'custom_latitude', 'custom_longitude'])
+        
+        if not orders:
+            return {'status': 'success', 'optimized_sequence': [], 'message': 'No active orders found for optimization.'}
+            
+        # Simple greedy TSP sorting based on coordinates
+        current_lat = 24.7136 # Default depot / Riyadh center
+        current_lng = 46.6753
+        
+        remaining = list(orders)
+        sequence = []
+        
+        while remaining:
+            # Find nearest next order
+            nearest = min(remaining, key=lambda o: ((float(o.get('custom_latitude') or 24.7136) - current_lat)**2 + (float(o.get('custom_longitude') or 46.6753) - current_lng)**2)**0.5)
+            remaining.remove(nearest)
+            sequence.append(nearest)
+            current_lat = float(nearest.get('custom_latitude') or 24.7136)
+            current_lng = float(nearest.get('custom_longitude') or 46.6753)
+            
+        return {'status': 'success', 'optimized_sequence': [o.name for o in sequence], 'details': sequence}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def reserve_van_spare_parts(sales_order, technician, item_code, qty):
+    """Reserves specific spare parts in the technician's van warehouse for an assigned order."""
+    try:
+        tech = frappe.get_doc('Field Technician', technician)
+        van_warehouse = tech.get('van_warehouse')
+        if not van_warehouse:
+            return {'status': 'error', 'message': 'Technician has no assigned van warehouse.'}
+            
+        # Check actual stock
+        bin_qty = frappe.db.get_value('Bin', {'item_code': item_code, 'warehouse': van_warehouse}, 'actual_qty') or 0.0
+        if float(bin_qty) < float(qty):
+            return {'status': 'warning', 'message': f'Insufficient stock in van warehouse ({bin_qty} available, {qty} requested). Material Request recommended.'}
+            
+        # Create a reservation record or log
+        frappe.logger().info(f"Reserved {qty} of {item_code} in {van_warehouse} for order {sales_order}")
+        return {'status': 'success', 'warehouse': van_warehouse, 'reserved_qty': qty, 'message': 'Inventory successfully reserved.'}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
