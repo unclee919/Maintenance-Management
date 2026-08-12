@@ -381,3 +381,71 @@ def get_ai_spare_part_suggestions(problem_description):
         return {'status': 'success', 'suggestions': suggested_parts}
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def run_preventive_maintenance_generator():
+    """Generates recurring service orders for Preventive Maintenance (PM) schedules."""
+    settings = frappe.get_single('Maintenance Settings')
+    if not settings.get('enable_pm_engine'):
+        return {'status': 'disabled'}
+        
+    # Example: Find active AMC contracts or recurring PM rules and generate sales orders
+    created_orders = []
+    amcs = frappe.get_all('AMC Contract', filters={'status': 'Active'}, fields=['name', 'customer', 'item_code', 'next_service_date'])
+    today = frappe.utils.nowdate()
+    
+    for amc in amcs:
+        if amc.next_service_date and amc.next_service_date <= today:
+            so = frappe.get_doc({
+                'doctype': 'Sales Order',
+                'customer': amc.customer,
+                'custom_is_maintenance_order': 1,
+                'custom_maintenance_status': 'New',
+                'custom_problem_description': f'Scheduled Preventive Maintenance under AMC: {amc.name}',
+                'delivery_date': today,
+                'items': [{
+                    'item_code': amc.item_code or 'MAINT-SVC-01',
+                    'qty': 1,
+                    'rate': 150.0,
+                    'amount': 150.0
+                }]
+            })
+            so.insert(ignore_permissions=True)
+            so.submit()
+            created_orders.append(so.name)
+            
+            # Update next service date by 30 days
+            next_date = frappe.utils.add_days(amc.next_service_date, 30)
+            frappe.db.set_value('AMC Contract', amc.name, 'next_service_date', next_date)
+            
+    frappe.db.commit()
+    return {'status': 'success', 'pm_orders_generated': created_orders}
+
+@frappe.whitelist(allow_guest=True)
+def get_customer_asset_portal_data(customer):
+    """Provides a self-service dashboard for customers to view assets, service history, and active requests."""
+    if not customer:
+        return {'status': 'error', 'message': 'Customer name required'}
+        
+    orders = frappe.get_all('Sales Order', filters={'customer': customer, 'custom_is_maintenance_order': 1}, fields=['name', 'transaction_date', 'custom_maintenance_status', 'custom_assigned_technician', 'delivery_date', 'custom_problem_description'])
+    return {'status': 'success', 'customer': customer, 'service_orders': orders}
+
+@frappe.whitelist()
+def verify_technician_certification(technician, required_skill):
+    """Verifies whether a technician holds a valid, non-expired certification for the required skill."""
+    settings = frappe.get_single('Maintenance Settings')
+    if not settings.get('enforce_certification_lock'):
+        return {'status': 'passed', 'reason': 'Certification lock disabled'}
+        
+    tech = frappe.get_doc('Field Technician', technician)
+    if not tech.get('certifications'):
+        return {'status': 'failed', 'reason': 'Technician has no certifications recorded.'}
+        
+    certs = [c.strip().lower() for c in tech.certifications.split(',')]
+    if required_skill.lower() not in certs:
+        return {'status': 'failed', 'reason': f'Technician lacks required certification: {required_skill}'}
+        
+    if tech.get('certification_expiry') and tech.certification_expiry < frappe.utils.nowdate():
+        return {'status': 'failed', 'reason': 'Technician certification has expired.'}
+        
+    return {'status': 'passed'}
