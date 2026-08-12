@@ -97,27 +97,27 @@ def after_migrate():
         })
         w.insert(ignore_permissions=True)
         
-	    ws = frappe.get_doc("Workspace", "Maintenance Management")
-	    ws.content = json.dumps([
-	        {"type": "header", "data": {"text": "📊 Maintenance Management Operations & Executive Summary", "col": 12}},
-	        {"type": "spacer", "data": {"col": 12}},
-	        {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 3}},
-	        {"type": "card", "data": {"card_name": "Pending Invoices Count", "col": 3}},
-	        {"type": "card", "data": {"card_name": "Avg Response Time", "col": 3}},
-	        {"type": "card", "data": {"card_name": "Avg Repair Duration", "col": 3}},
-	        {"type": "spacer", "data": {"col": 12}},
-	        {"type": "chart", "data": {"chart_name": "Orders by Status", "col": 12}},
-	        {"type": "spacer", "data": {"col": 12}},
-	        {"type": "header", "data": {"text": "🗺️ Live Operations & Technician Tracking", "col": 12}},
-	        {"type": "shortcut", "data": {"shortcut_name": "Technician Live Tracking", "col": 6, "type": "Page", "link_to": "technician-tracking", "label": "Live Map & Tracking"}},
-	        {"type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 6, "type": "DocType", "link_to": "Field Maintenance Settings", "label": "Settings & Toggles"}},
-	        {"type": "spacer", "data": {"col": 12}},
-	        {"type": "header", "data": {"text": "⚡ Core Modules & Quick Links", "col": 12}},
-	        {"type": "shortcut", "data": {"shortcut_name": "Field Technician", "col": 4}},
-	        {"type": "shortcut", "data": {"shortcut_name": "Field Service Request", "col": 4}},
-	        {"type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 4}},
-	    ])
-	    ws.save(ignore_permissions=True)
+    ws = frappe.get_doc("Workspace", "Maintenance Management")
+    ws.content = json.dumps([
+        {"type": "header", "data": {"text": "📊 Maintenance Management Operations & Executive Summary", "col": 12}},
+        {"type": "spacer", "data": {"col": 12}},
+        {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 3}},
+        {"type": "card", "data": {"card_name": "Pending Invoices Count", "col": 3}},
+        {"type": "card", "data": {"card_name": "Avg Response Time", "col": 3}},
+        {"type": "card", "data": {"card_name": "Avg Repair Duration", "col": 3}},
+        {"type": "spacer", "data": {"col": 12}},
+        {"type": "chart", "data": {"chart_name": "Orders by Status", "col": 12}},
+        {"type": "spacer", "data": {"col": 12}},
+        {"type": "header", "data": {"text": "🗺️ Live Operations & Technician Tracking", "col": 12}},
+        {"type": "shortcut", "data": {"shortcut_name": "Technician Live Tracking", "col": 6, "type": "Page", "link_to": "technician-tracking", "label": "Live Map & Tracking"}},
+        {"type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 6, "type": "DocType", "link_to": "Field Maintenance Settings", "label": "Settings & Toggles"}},
+        {"type": "spacer", "data": {"col": 12}},
+        {"type": "header", "data": {"text": "⚡ Core Modules & Quick Links", "col": 12}},
+        {"type": "shortcut", "data": {"shortcut_name": "Field Technician", "col": 4}},
+        {"type": "shortcut", "data": {"shortcut_name": "Field Service Request", "col": 4}},
+        {"type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 4}},
+    ])
+    ws.save(ignore_permissions=True)
 
     # 4. Update Technician Dashboard Workspace Content
     if frappe.db.exists("Workspace", "Technician Dashboard"):
