@@ -22,7 +22,3 @@ scheduler_events = {
         "maintenance_management.controllers.sales_order.check_sla_escalations"
     ]
 }
-
-fixtures = [
-    {"dt": "Custom Field", "filters": [["module", "=", "Maintenance Management"]]}
-]
