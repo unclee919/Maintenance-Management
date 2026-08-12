@@ -145,7 +145,9 @@ def process_erpnext_integration(doc):
                     frappe.logger().info(f"Created Sales Invoice {inv.name} for Sales Order {doc.name}")
                 except Exception as inv_err:
                     import traceback
-                    frappe.log_error(f"Sales Invoice Error: {str(inv_err)}\n{traceback.format_exc()}", "Maintenance Sales Invoice Error")
+                    err_msg = f"Sales Invoice Error: {str(inv_err)}\n{traceback.format_exc()}"
+                    frappe.log_error(err_msg, "Maintenance Sales Invoice Error")
+                    print(err_msg)
     except Exception as e:
         frappe.log_error(f"ERPNext Integration Error: {str(e)}", "Maintenance ERPNext Error")
 
