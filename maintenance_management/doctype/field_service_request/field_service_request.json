@@ -15,6 +15,9 @@
   "status",
   "technician",
   "scheduled_date",
+  "parts_section",
+  "parts_consumed",
+  "totals_section",
   "total_amount",
   "warranty_status"
  ],
@@ -73,6 +76,22 @@
    "fieldname": "scheduled_date",
    "fieldtype": "Datetime",
    "label": "Scheduled Date & Time"
+  },
+  {
+   "fieldname": "parts_section",
+   "fieldtype": "Section Break",
+   "label": "Parts Consumed & Inventory"
+  },
+  {
+   "fieldname": "parts_consumed",
+   "fieldtype": "Table",
+   "label": "Parts Consumed",
+   "options": "Service Part Item"
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "Billing & Warranty"
   },
   {
    "fieldname": "total_amount",

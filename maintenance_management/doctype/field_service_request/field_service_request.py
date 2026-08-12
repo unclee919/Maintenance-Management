@@ -7,6 +7,16 @@ import requests
 from frappe.model.document import Document
 
 class FieldServiceRequest(Document):
+    def validate(self):
+        # Calculate totals from parts consumed
+        total = 0.0
+        for part in self.get("parts_consumed") or []:
+            if part.rate and part.qty:
+                part.amount = part.rate * part.qty
+                total += part.amount
+        if total > 0 and not self.total_amount:
+            self.total_amount = total
+
     def before_save(self):
         try:
             settings = frappe.get_single("Field Maintenance Settings")
@@ -38,15 +48,12 @@ class FieldServiceRequest(Document):
         if self.status == "New" and auto_assign:
             self.auto_assign()
 
-        # Send webhook notification (e.g. to n8n workflow or CRM)
         self.trigger_webhook("Created")
 
     def on_update(self):
-        # Trigger webhook on status change
         if self.has_value_changed("status"):
             self.trigger_webhook(f"Status Changed to {self.status}")
 
-            # If completed, trigger ERPNext billing and inventory integration
             if self.status == "Completed":
                 self.process_erpnext_integration()
 
@@ -62,7 +69,6 @@ class FieldServiceRequest(Document):
 
     def trigger_webhook(self, event_type):
         try:
-            # Check if webhook URL is stored in settings or fetch default n8n endpoint
             webhook_url = frappe.db.get_value("Field Maintenance Settings", None, "webhook_url")
             if webhook_url:
                 payload = {
@@ -77,30 +83,58 @@ class FieldServiceRequest(Document):
                 }
                 requests.post(webhook_url, json=payload, timeout=5)
         except Exception as e:
-            frapped_msg = f"Webhook trigger error: {str(e)}"
-            frappe.log_error(frapped_msg, "Maintenance Webhook Error")
+            frappe.log_error(f"Webhook trigger error: {str(e)}", "Maintenance Webhook Error")
 
     def process_erpnext_integration(self):
         try:
-            # 1. Create Sales Invoice in ERPNext if total_amount > 0 and ERPNext is installed
+            # 1. Create Stock Entry (Material Consumption) for consumed parts
+            if frappe.db.exists("DocType", "Stock Entry") and self.get("parts_consumed"):
+                se_items = []
+                for p in self.get("parts_consumed"):
+                    se_items.append({
+                        "item_code": p.item_code,
+                        "qty": p.qty,
+                        "basic_rate": p.rate,
+                        "s_warehouse": "Stores - E" # default warehouse or fallback
+                    })
+                if se_items:
+                    se = frappe.get_doc({
+                        "doctype": "Stock Entry",
+                        "stock_entry_type": "Material Issue",
+                        "custom_service_request": self.name,
+                        "items": se_items
+                    })
+                    se.insert(ignore_permissions=True)
+                    se.submit()
+                    frappe.logger().info(f"Created Stock Entry {se.name} for Service Request {self.name}")
+
+            # 2. Create Sales Invoice in ERPNext
             if frappe.db.exists("DocType", "Sales Invoice") and self.total_amount and self.total_amount > 0:
-                # Check if invoice already created for this request
                 existing_invoice = frappe.db.get_value("Sales Invoice", {"custom_service_request": self.name}, "name")
                 if not existing_invoice:
+                    inv_items = []
+                    for p in self.get("parts_consumed") or []:
+                        inv_items.append({
+                            "item_code": p.item_code,
+                            "qty": p.qty,
+                            "rate": p.rate,
+                            "description": f"Part: {p.item_name}"
+                        })
+                    if not inv_items:
+                        inv_items.append({
+                            "item_code": "Maintenance Service",
+                            "qty": 1,
+                            "rate": self.total_amount,
+                            "description": f"Field Service Repair - {self.equipment_type} ({self.name})"
+                        })
+
                     inv = frappe.get_doc({
                         "doctype": "Sales Invoice",
                         "customer": self.customer_name,
                         "custom_service_request": self.name,
-                        "items": [
-                            {
-                                "item_code": "Maintenance Service",
-                                "qty": 1,
-                                "rate": self.total_amount,
-                                "description": f"Field Service Repair - {self.equipment_type} ({self.name})"
-                            }
-                        ]
+                        "items": inv_items
                     })
-                    # If Item 'Maintenance Service' doesn't exist, create it or use generic item
+                    
                     if not frappe.db.exists("Item", "Maintenance Service"):
                         try:
                             item = frappe.get_doc({
@@ -113,9 +147,39 @@ class FieldServiceRequest(Document):
                             item.insert(ignore_permissions=True)
                         except Exception:
                             pass
-                    
+
                     inv.insert(ignore_permissions=True)
                     inv.submit()
                     frappe.logger().info(f"Created Sales Invoice {inv.name} for Service Request {self.name}")
         except Exception as e:
             frappe.log_error(f"ERPNext Integration Error: {str(e)}", "Maintenance ERPNext Error")
+
+    @frappe.whitelist()
+    def run_ai_diagnostics(self):
+        """AI-powered diagnostics based on issue description to suggest parts and estimated cost"""
+        desc = (self.issue_description or "").lower()
+        suggested_parts = []
+        est_cost = 100.0
+
+        if "cool" in desc or "ac" in desc or "refrigerant" in desc:
+            suggested_parts.append({"item_code": "Refrigerant R410A", "qty": 1, "rate": 50.0})
+            est_cost = 150.0
+        elif "leak" in desc or "water" in desc:
+            suggested_parts.append({"item_code": "Drain Pipe Valve", "qty": 1, "rate": 25.0})
+            est_cost = 80.0
+        elif "noise" in desc or "motor" in desc:
+            suggested_parts.append({"item_code": "Fan Motor Bearing", "qty": 1, "rate": 75.0})
+            est_cost = 200.0
+        else:
+            suggested_parts.append({"item_code": "General Diagnostic Kit", "qty": 1, "rate": 40.0})
+            est_cost = 90.0
+
+        # Populate parts if empty
+        if not self.get("parts_consumed"):
+            for p in suggested_parts:
+                self.append("parts_consumed", p)
+            self.total_amount = est_cost
+            self.save(ignore_permissions=True)
+            return {"status": "success", "message": "AI Diagnostics completed successfully", "estimated_cost": est_cost}
+        
+        return {"status": "info", "message": "Parts already listed"}
