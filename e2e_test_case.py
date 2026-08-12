@@ -1,7 +1,7 @@
 import traceback
 import frappe
 
-frappe.init("erp.elmrkz.cloud")
+frappe.init(site="erp.elmrkz.cloud", sites_path="sites")
 frappe.connect()
 
 try:
