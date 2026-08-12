@@ -21,20 +21,20 @@ def track_request(request_id):
 
 @frappe.whitelist()
 def fix_workspace():
-	try:
-		w = frappe.get_doc("Workspace", "Maintenance Management")
-		w.public = 1
-		w.type = "Workspace"
-		w.link_type = None
-		w.link_to = None
-		w.icon = "settings"
-		w.is_standard = 1
-		w.save(ignore_permissions=True)
-	except Exception as e:
-		pass
-	
-	frappe.db.commit()
-	return "Workspace Maintenance Management fixed successfully!"
+    try:
+        w = frappe.get_doc("Workspace", "Maintenance Management")
+        w.public = 1
+        w.type = "Workspace"
+        w.link_type = None
+        w.link_to = None
+        w.icon = "settings"
+        w.is_standard = 1
+        w.save(ignore_permissions=True)
+    except Exception as e:
+        pass
+    
+    frappe.db.commit()
+    return "Workspace Maintenance Management fixed successfully!"
 
 def after_migrate():
     import json
@@ -113,11 +113,11 @@ def after_migrate():
     ])
     ws.save(ignore_permissions=True)
 
-	# 4. Update Technician Dashboard Workspace Content
-	if frappe.db.exists("Workspace", "Technician Dashboard"):
-		ws_tech = frappe.get_doc("Workspace", "Technician Dashboard")
-		ws_tech.type = "Workspace"
-		ws_tech.content = json.dumps([
+    # 4. Update Technician Dashboard Workspace Content
+    if frappe.db.exists("Workspace", "Technician Dashboard"):
+        ws_tech = frappe.get_doc("Workspace", "Technician Dashboard")
+        ws_tech.type = "Workspace"
+        ws_tech.content = json.dumps([
             {"type": "header", "data": {"text": "🛠️ Technician Field Operations & Portal", "col": 12}},
             {"type": "spacer", "data": {"col": 12}},
             {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 6}},
@@ -134,20 +134,20 @@ def after_migrate():
 
 @frappe.whitelist()
 def check_module():
-	res = {
-		"modules": frappe.get_all('Module Def', filters={'app_name': 'maintenance_management'}, fields=['name']),
-		"workspaces": frappe.get_all('Workspace', filters={'app': 'maintenance_management'}, fields=['name', 'module', 'public'])
-	}
-	if not frappe.db.exists('Module Def', 'Maintenance Management'):
-		m = frappe.get_doc({
-			'doctype': 'Module Def',
-			'module_name': 'Maintenance Management',
-			'app_name': 'maintenance_management'
-		})
-		m.insert(ignore_permissions=True)
-		frappe.db.commit()
-		res["created_module"] = True
-	return res
+    res = {
+        "modules": frappe.get_all('Module Def', filters={'app_name': 'maintenance_management'}, fields=['name']),
+        "workspaces": frappe.get_all('Workspace', filters={'app': 'maintenance_management'}, fields=['name', 'module', 'public'])
+    }
+    if not frappe.db.exists('Module Def', 'Maintenance Management'):
+        m = frappe.get_doc({
+            'doctype': 'Module Def',
+            'module_name': 'Maintenance Management',
+            'app_name': 'maintenance_management'
+        })
+        m.insert(ignore_permissions=True)
+        frappe.db.commit()
+        res["created_module"] = True
+    return res
 
 @frappe.whitelist()
 def update_technician_location(sales_order, latitude, longitude, tracking_status="active"):
