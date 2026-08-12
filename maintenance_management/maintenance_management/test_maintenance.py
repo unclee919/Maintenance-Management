@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-import frappedef test_maintenance_workflow():
+import frappe
+
+def test_maintenance_workflow():
     print("--- STARTING UNIT TEST SUITE ---")
     
     # 1. Test Customer existence
