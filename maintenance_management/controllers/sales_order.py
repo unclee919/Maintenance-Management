@@ -96,27 +96,33 @@ def process_erpnext_integration(doc):
 
         # Create Stock Entry (Material Issue) for items consumed in Sales Order
         if frappe.db.exists("DocType", "Stock Entry") and doc.get("items"):
-            se_items = []
-            for item in doc.get("items"):
-                se_items.append({
-                    "item_code": item.item_code,
-                    "qty": item.qty,
-                    "basic_rate": item.rate,
-                    "valuation_rate": item.rate,
-                    "allow_zero_valuation_rate": 1,
-                    "s_warehouse": warehouse
-                })
-            if se_items:
-                se = frappe.get_doc({
-                    "doctype": "Stock Entry",
-                    "stock_entry_type": "Material Issue",
-                    "allow_zero_valuation_rate": 1,
-                    "remarks": f"Sales Order Maintenance Service: {doc.name} (Warehouse: {warehouse})",
-                    "items": se_items
-                })
-                se.insert(ignore_permissions=True)
-                se.submit()
-                frappe.logger().info(f"Created Stock Entry {se.name} for Sales Order {doc.name}")
+            try:
+                se_items = []
+                for item in doc.get("items"):
+                    se_items.append({
+                        "item_code": item.item_code,
+                        "qty": item.qty,
+                        "basic_rate": item.rate,
+                        "valuation_rate": item.rate,
+                        "allow_zero_valuation_rate": 1,
+                        "s_warehouse": warehouse
+                    })
+                if se_items:
+                    se = frappe.get_doc({
+                        "doctype": "Stock Entry",
+                        "stock_entry_type": "Material Issue",
+                        "allow_zero_valuation_rate": 1,
+                        "remarks": f"Sales Order Maintenance Service: {doc.name} (Warehouse: {warehouse})",
+                        "items": se_items
+                    })
+                    se.insert(ignore_permissions=True)
+                    se.submit()
+                    frappe.logger().info(f"Created Stock Entry {se.name} for Sales Order {doc.name}")
+            except Exception as se_err:
+                import traceback
+                err_msg = f"Stock Entry Error: {str(se_err)}\n{traceback.format_exc()}"
+                frappe.log_error(err_msg, "Maintenance Stock Entry Error")
+                print(err_msg)
 
         # Sales Invoice creation skipped due to ERPNext v15/v16 contact billing schema schema mismatch on remote server
     except Exception as e:
