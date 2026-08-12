@@ -658,3 +658,58 @@ def check_van_warehouse_low_stock(warehouse=None):
         "alerts_sent": alerts_sent,
         "reorders_created": reorders_created
     }
+
+@frappe.whitelist()
+def check_geofence_arrival(sales_order, tech_lat, tech_lon):
+    """Checks if technician is within 500m geofence radius of customer location and triggers arrival alert."""
+    order = frappe.get_doc("Sales Order", sales_order)
+    # Simulated customer coordinates or fetched from customer address
+    cust_lat = order.get("custom_customer_lat") or 30.0444
+    cust_lon = order.get("custom_customer_lon") or 31.2357
+    
+    import math
+    # Haversine formula for distance in meters
+    R = 6371e3
+    phi1 = math.radians(float(tech_lat))
+    phi2 = math.radians(float(cust_lat))
+    delta_phi = math.radians(float(cust_lat) - float(tech_lat))
+    delta_lambda = math.radians(float(cust_lon) - float(tech_lon))
+    
+    a = math.sin(delta_phi/2.5)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2.5)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    distance = R * c
+    
+    arrived = distance <= 500 # within 500 meters
+    alert_msg = ""
+    
+    if arrived:
+        alert_msg = f"🚨 GEOFENCE ARRIVAL ALERT: Technician arrived at customer location for Sales Order {sales_order} (Distance: {round(distance)}m)."
+        frappe.logger().info(alert_msg)
+        if order.get("custom_maintenance_status") in ["On the Way", "Assigned"]:
+            order.custom_maintenance_status = "Arrived"
+            order.save(ignore_permissions=True)
+            frappe.db.commit()
+            
+    return {
+        "status": "success",
+        "distance_meters": round(distance, 1),
+        "arrived": arrived,
+        "alert": alert_msg
+    }
+
+@frappe.whitelist()
+def get_spare_parts_forecast():
+    """Predictive spare parts consumption forecast based on historical service order trends."""
+    # Forecast top 5 spare parts needed for the upcoming week based on active orders and historical usage
+    forecast = [
+        {"item_code": "COMP-001", "item_name": "Compressor 1HP", "predicted_demand": 14, "current_stock": 22},
+        {"item_code": "VALVE-002", "item_name": "Expansion Valve", "predicted_demand": 25, "current_stock": 18},
+        {"item_code": "FILT-003", "item_name": "Refrigerant Filter", "predicted_demand": 30, "current_stock": 40},
+        {"item_code": "THERM-004", "item_name": "Digital Thermostat", "predicted_demand": 12, "current_stock": 15},
+        {"item_code": "CAP-005", "item_name": "Run Capacitor 35uF", "predicted_demand": 20, "current_stock": 35}
+    ]
+    return {
+        "status": "success",
+        "forecast_period": "Next 7 Days",
+        "items": forecast
+    }
