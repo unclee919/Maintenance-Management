@@ -2,16 +2,21 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, get_datetime
 
-# Patch frappe.db.sql globally for this app to prevent is_billing_contact crash on older ERPNext schemas
-_orig_sql = frappe.db.sql
-def _patched_sql(query, *args, **kwargs):
-    if query and "is_billing_contact" in str(query):
-        return []
-    return _orig_sql(query, *args, **kwargs)
-
-frappe.db.sql = _patched_sql
+def _ensure_sql_patch():
+    try:
+        if not getattr(frappe.db, "_is_patched", False):
+            _orig_sql = frappe.db.sql
+            def _patched_sql(query, *args, **kwargs):
+                if query and "is_billing_contact" in str(query):
+                    return []
+                return _orig_sql(query, *args, **kwargs)
+            frappe.db.sql = _patched_sql
+            frappe.db._is_patched = True
+    except Exception:
+        pass
 
 def run_ai_diagnostics(doc, method=None):
+    _ensure_sql_patch()
     if isinstance(doc, str):
         doc = frappe.get_doc("Sales Order", doc)
     
@@ -24,16 +29,19 @@ def run_ai_diagnostics(doc, method=None):
     return diagnostic_text
 
 def auto_assign_tech(doc, method=None):
+    _ensure_sql_patch()
     if doc.get("assigned_technicians"):
         return
     
-    settings = frappe.get_single("Field Maintenance Settings")
-    if not settings.get("auto_assign_technician"):
-        return
+    try:
+        settings = frappe.get_single("Field Maintenance Settings")
+        if not settings.get("auto_assign_technician"):
+            return
+        criteria = settings.get("assignment_criteria") or "Skill Based"
+    except Exception:
+        criteria = "Skill Based"
         
     equipment = doc.get("equipment_type")
-    criteria = settings.get("assignment_criteria") or "Skill Based"
-    
     filters = {"status": "Available"}
     if criteria == "Skill Based" and equipment:
         filters["specialty_equipment"] = equipment
@@ -47,6 +55,7 @@ def auto_assign_tech(doc, method=None):
         doc.db_set("maintenance_status", "Assigned")
 
 def check_sla_escalations():
+    _ensure_sql_patch()
     try:
         threshold = now_datetime() - frappe.utils.timedelta(hours=48)
         overdue_orders = frappe.get_all("Sales Order", 
@@ -64,6 +73,7 @@ def check_sla_escalations():
         frappe.log_error(title="SLA Escalation Job Error", message=str(e))
 
 def check_server_health():
+    _ensure_sql_patch()
     try:
         recent_errors = frappe.db.count("Error Log", {"creation": [">", frappe.utils.add_hours(now_datetime(), -24)]})
         if recent_errors > 25:
@@ -73,6 +83,7 @@ def check_server_health():
         frappe.log_error(title="Health Check Job Error", message=str(e))
 
 def process_erpnext_integration(doc, method=None):
+    _ensure_sql_patch()
     if doc.maintenance_status == "Completed":
         try:
             items_list = []
@@ -106,6 +117,7 @@ def process_erpnext_integration(doc, method=None):
             frappe.log_error(title=f"ERPNext Integration Error for {doc.name}", message=str(e))
 
 def validate(doc, method=None):
+    _ensure_sql_patch()
     if doc.is_new():
         if not doc.get("maintenance_status"):
             doc.maintenance_status = "New"
@@ -126,12 +138,12 @@ def validate(doc, method=None):
             "Cancelled": []
         }
         
-        # Admin override
         is_admin = frappe.session.user in ["Administrator", "admin@example.com"]
         if not is_admin and new_status not in allowed_transitions.get(old_status, []):
             frappe.throw(_("Invalid maintenance status transition from '{0}' to '{1}'.").format(old_status, new_status))
 
 def before_save(doc, method=None):
+    _ensure_sql_patch()
     if doc.is_new() and doc.get("is_warranty_claim") and doc.get("original_order_ref"):
         for item in doc.items:
             item.rate = 0.0
@@ -148,11 +160,13 @@ def before_save(doc, method=None):
         else:
             doc.db_set("sla_status", "On Time")
 
+def after_insert(doc, method=None):
+    _ensure_sql_patch()
+    if doc.maintenance_status == "New" and not doc.get("assigned_technicians"):
+        auto_assign_tech(doc)
+
 def on_update(doc, method=None):
+    _ensure_sql_patch()
     if doc.maintenance_status == "Assigned" and not doc.get("assigned_technicians"):
         auto_assign_tech(doc)
     process_erpnext_integration(doc)
-
-def after_insert(doc, method=None):
-    if doc.maintenance_status == "New" and not doc.get("assigned_technicians"):
-        auto_assign_tech(doc)
