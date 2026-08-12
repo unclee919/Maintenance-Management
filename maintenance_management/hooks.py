@@ -17,7 +17,14 @@ doc_events = {
     }
 }
 
+scheduler_events = {
+    "daily": [
+        "maintenance_management.controllers.sales_order.check_sla_escalations"
+    ]
+}
+
 fixtures = [
     {"dt": "Custom Field", "filters": [["module", "=", "Maintenance Management"]]},
-    {"dt": "Workspace", "filters": [["module", "=", "Maintenance Management"]]}
+    {"dt": "Workspace", "filters": [["module", "=", "Maintenance Management"]]},
+    {"dt": "Dashboard Chart", "filters": [["module", "=", "Maintenance Management"]]}
 ]

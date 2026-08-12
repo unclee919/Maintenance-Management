@@ -169,3 +169,21 @@ def run_ai_diagnostics(sales_order_name):
         return {"status": "success", "message": "AI Diagnostics completed successfully", "estimated_cost": est_cost}
 
     return {"status": "info", "message": "Items already listed"}
+
+def check_sla_escalations():
+    """Daily background job to flag service orders stuck in In Progress for over 48 hours."""
+    try:
+        stuck_orders = frappe.get_all(
+            "Sales Order",
+            filters={
+                "maintenance_status": ["in", ["In Progress", "Waiting for Part"]],
+                "modified": ["<", frappe.utils.add_days(frappe.utils.nowdate(), -2)]
+            },
+            fields=["name", "customer", "technician", "modified"]
+        ]
+        for order in stuck_orders:
+            frappe.logger().warning(f"SLA Escalation Alert: Order {order.name} for customer {order.customer} assigned to {order.technician} has been stuck since {order.modified}")
+            # Log error / escalation for management dashboard review
+            frappe.log_error(f"Order {order.name} is overdue for completion.", "Maintenance SLA Escalation")
+    except Exception as e:
+        frappe.log_error(f"SLA Check Error: {str(e)}", "Maintenance SLA Error")
