@@ -622,3 +622,15 @@ def check_certification_expiries():
         return {'status': 'success', 'expiring_certifications': alerts}
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def get_navigation_link(sales_order):
+    """Generates a one-click Google Maps turn-by-turn navigation URL for technicians."""
+    try:
+        so = frappe.get_doc('Sales Order', sales_order)
+        lat = so.get('custom_latitude') or 24.7136 # Default Riyadh fallback
+        lng = so.get('custom_longitude') or 46.6753
+        map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
+        return {'status': 'success', 'sales_order': sales_order, 'navigation_url': map_url}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
