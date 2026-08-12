@@ -5,11 +5,12 @@ def populate_data():
     print("=== STARTING SAMPLE DATA POPULATION ===")
     
     # 1. Update Field Maintenance Settings
-    if not frappe.db.exists("Field Maintenance Settings", "Field Maintenance Settings"):
+    try:
+        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+    except frappe.DoesNotExistError:
         settings = frappe.new_doc("Field Maintenance Settings")
         settings.insert(ignore_permissions=True)
-    
-    settings = frappe.get_single("Field Maintenance Settings")
+        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     settings.enable_gps_tracking = 1
     settings.require_human_confirmation = 0
     settings.enable_price_approval = 1
