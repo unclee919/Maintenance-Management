@@ -183,6 +183,24 @@
 				   "fieldname": "utilization_report_email",
 				   "fieldtype": "Data",
 				   "label": "Supervisor Report Email / WhatsApp Group"
+				  },
+				  {
+				   "default": "1",
+				   "fieldname": "enable_price_alert",
+				   "fieldtype": "Check",
+				   "label": "Enable Price Fluctuation Emergency Alerts"
+				  },
+				  {
+				   "default": "5.0",
+				   "fieldname": "price_alert_threshold_pct",
+				   "fieldtype": "Float",
+				   "label": "Price Fluctuation Alert Threshold (%)"
+				  },
+				  {
+				   "default": "1",
+				   "fieldname": "enable_fallback_supplier",
+				   "fieldtype": "Check",
+				   "label": "Enable Automatic Fallback Supplier Routing on Stock-Out"
 				  }
 				 ],
  "icon": "octicon octicon-settings",

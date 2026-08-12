@@ -49,6 +49,16 @@ frappe.pages['technician-tracking'].on_page_load = function(wrapper) {
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white"><strong>💰 Executive Multi-Region Spare Parts Expenditure & Cost Savings Trends</strong></div>
+                        <div class="card-body" id="expenditure-container">
+                            <p>Loading expenditure and savings trends...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card">
                 <div class="card-header bg-secondary text-white"><strong>🗺️ Live Map Overlay, Technician Routes & Geofence Boundaries (Cairo / Giza)</strong></div>
                 <div class="card-body" style="background: #ffffff;">
@@ -201,3 +211,49 @@ function load_utilization() {
 }
 
 setTimeout(load_utilization, 1200);
+
+    // Load Executive Expenditure Summary
+    frappe.call({
+        method: "maintenance_management.maintenance_management.api.get_executive_expenditure_summary",
+        callback: function(r) {
+            if(r.message && r.message.status === "success") {
+                let data = r.message;
+                let html = `<div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light border rounded">
+                            <h6>Total Spare Parts Expenditure</h6>
+                            <h3 class="text-danger">EGP ${data.total_expenditure.toLocaleString()}</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light border rounded">
+                            <h6>Total Cost Savings (Negotiated & Bulk)</h6>
+                            <h3 class="text-success">EGP ${data.total_cost_savings.toLocaleString()}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Region</th>
+                                <th>Expenditure (EGP)</th>
+                                <th>Cost Savings (EGP)</th>
+                                <th>YoY Spend Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                data.regions.forEach(reg => {
+                    let trendBadge = reg.yoy_trend.startsWith("+") ? `<span class="badge badge-warning">${reg.yoy_trend}</span>` : `<span class="badge badge-success">${reg.yoy_trend}</span>`;
+                    html += `<tr>
+                        <td><strong>${reg.region}</strong></td>
+                        <td>EGP ${reg.total_expenditure_egp.toLocaleString()}</td>
+                        <td>EGP ${reg.cost_savings_egp.toLocaleString()}</td>
+                        <td>${trendBadge}</td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+                $('#expenditure-container').html(html);
+            }
+        }
+    });
