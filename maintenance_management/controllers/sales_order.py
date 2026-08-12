@@ -123,10 +123,11 @@ def process_erpnext_integration(doc):
                 err_msg = f"Stock Entry Error: {str(se_err)}\n{traceback.format_exc()}"
                 frappe.log_error(err_msg, "Maintenance Stock Entry Error")
                 print(err_msg)
-
-        # Sales Invoice creation skipped due to ERPNext v15/v16 contact billing schema schema mismatch on remote server
     except Exception as e:
-        frappe.log_error(f"ERPNext Integration Error: {str(e)}", "Maintenance ERPNext Error")
+        import traceback
+        err_msg = f"ERPNext Integration Error: {str(e)}\n{traceback.format_exc()}"
+        frappe.log_error(err_msg, "Maintenance ERPNext Error")
+        print(err_msg)
 
 @frappe.whitelist()
 def run_ai_diagnostics(sales_order_name):
