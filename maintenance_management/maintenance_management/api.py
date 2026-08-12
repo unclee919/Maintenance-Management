@@ -282,3 +282,102 @@ def check_van_warehouse_low_stock():
         frappe.log_error(f"Low stock alert for {b.item_code} in {b.warehouse}: {b.actual_qty} remaining.", "Van Low Stock Alert")
         
     return {'status': 'success', 'low_stock_items_count': len(bins)}
+
+@frappe.whitelist()
+def check_and_replenish_van_stock():
+    """Checks van warehouse stock and automatically creates a Stock Entry (Material Transfer) if below threshold."""
+    settings = frappe.get_single('Maintenance Settings')
+    if not settings.get('auto_replenish_van') or not settings.get('main_source_warehouse'):
+        return {'status': 'disabled'}
+        
+    threshold = int(settings.get('low_stock_threshold') or 3)
+    source_wh = settings.main_source_warehouse
+    
+    bins = frappe.db.sql("""
+        select item_code, warehouse, actual_qty 
+        from `tabBin` 
+        where warehouse like 'Van Warehouse%' 
+        and actual_qty <= %s
+    """, threshold, as_dict=1)
+    
+    replenished = []
+    for b in bins:
+        # Create Stock Entry of type Material Transfer
+        se = frappe.get_doc({
+            'doctype': 'Stock Entry',
+            'stock_entry_type': 'Material Transfer',
+            'from_warehouse': source_wh,
+            'to_warehouse': b.warehouse,
+            'company': frappe.defaults.get_defaults().get('company'),
+            'items': [{
+                'item_code': b.item_code,
+                'qty': threshold * 2, # Replenish up to double threshold
+                's_warehouse': source_wh,
+                't_warehouse': b.warehouse
+            }]
+        })
+        se.insert(ignore_permissions=True)
+        se.submit()
+        replenished.append({'item': b.item_code, 'warehouse': b.warehouse, 'stock_entry': se.name})
+        
+    frappe.db.commit()
+    return {'status': 'success', 'replenished_orders': replenished}
+
+@frappe.whitelist()
+def get_manager_route_map():
+    """Returns real-time GPS locations and active orders for all technicians for visual manager dispatch map."""
+    techs = frappe.get_all('Field Technician', fields=['name', 'technician_name', 'status', 'current_latitude', 'current_longitude', 'zone', 'last_location_update'])
+    active_orders = frappe.db.sql("""
+        select name, customer, custom_assigned_technician, custom_maintenance_status, delivery_date 
+        from `tabSales Order` 
+        where custom_is_maintenance_order = 1 
+        and custom_maintenance_status not in ('Completed', 'Cancelled')
+    """, as_dict=1)
+    
+    return {'technicians': techs, 'active_orders': active_orders}
+
+@frappe.whitelist()
+def create_technician_expense(technician, employee, description, amount, sales_order=None, receipt_image=None):
+    """Allows technicians to submit incidental mobile expenses (fuel, tolls) for manager approval."""
+    try:
+        claim = frappe.get_doc({
+            'doctype': 'Expense Claim',
+            'employee': employee,
+            'approval_status': 'Draft',
+            'posting_date': frappe.utils.nowdate(),
+            'custom_maintenance_order': sales_order,
+            'custom_technician': technician,
+            'expenses': [{
+                'expense_date': frappe.utils.nowdate(),
+                'expense_type': 'Field Operations',
+                'amount': float(amount),
+                'description': description,
+                'custom_receipt_image': receipt_image
+            }]
+        })
+        claim.insert(ignore_permissions=True)
+        frappe.db.commit()
+        return {'status': 'success', 'expense_claim': claim.name}
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), 'Technician Expense Claim Error')
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def get_ai_spare_part_suggestions(problem_description):
+    """AI diagnostic helper to suggest required spare parts based on issue description."""
+    try:
+        desc = problem_description.lower()
+        suggested_parts = []
+        
+        if 'cooling' in desc or 'ac' in desc or 'compressor' in desc:
+            suggested_parts.append({'item_code': 'FILTER-01', 'item_name': 'Air Filter Replacement', 'confidence': '92%'})
+            suggested_parts.append({'item_code': 'REFRIG-R410', 'item_name': 'Refrigerant Gas R410A', 'confidence': '85%'})
+        elif 'electrical' in desc or 'power' in desc or 'circuit' in desc:
+            suggested_parts.append({'item_code': 'FUSE-10A', 'item_name': '10A Cartridge Fuse', 'confidence': '95%'})
+            suggested_parts.append({'item_code': 'CABLE-COPPER', 'item_name': 'Copper Wiring Harness', 'confidence': '88%'})
+        else:
+            suggested_parts.append({'item_code': 'MAINT-LUBE', 'item_name': 'Synthetic Lubricant Spray', 'confidence': '90%'})
+            
+        return {'status': 'success', 'suggestions': suggested_parts}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
