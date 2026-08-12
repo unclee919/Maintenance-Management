@@ -234,3 +234,51 @@ def reschedule_maintenance_order(sales_order, new_delivery_date, reason=None):
     doc.save(ignore_permissions=True)
     frappe.db.commit()
     return {'status': 'success', 'new_date': new_delivery_date}
+
+@frappe.whitelist()
+def create_onsite_quotation(customer, items, sales_order=None, technician=None, signature=None):
+    """Allows a technician to generate an on-site Quotation for additional repairs, with customer signature approval."""
+    try:
+        import json
+        if isinstance(items, str):
+            items = json.loads(items)
+            
+        quote = frappe.get_doc({
+            'doctype': 'Quotation',
+            'quotation_to': 'Customer',
+            'party_name': customer,
+            'custom_maintenance_order': sales_order,
+            'custom_assigned_technician': technician,
+            'custom_customer_signature': signature,
+            'order_type': 'Maintenance',
+            'transaction_date': frappe.utils.nowdate(),
+            'valid_till': frappe.utils.add_days(frappe.utils.nowdate(), 7),
+            'items': items
+        })
+        quote.insert(ignore_permissions=True)
+        quote.submit()
+        frappe.db.commit()
+        return {'status': 'success', 'quotation': quote.name}
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), 'On-Site Quotation Error')
+        return {'status': 'error', 'message': str(e)}
+
+@frappe.whitelist()
+def check_van_warehouse_low_stock():
+    """Background check for van warehouse inventory levels against configured threshold."""
+    settings = frappe.get_single('Maintenance Settings')
+    if not settings.get('enable_low_stock_alerts'):
+        return {'status': 'disabled'}
+        
+    threshold = int(settings.get('low_stock_threshold') or 3)
+    bins = frappe.db.sql("""
+        select item_code, warehouse, actual_qty 
+        from `tabBin` 
+        where warehouse like 'Van Warehouse%' 
+        and actual_qty <= %s
+    """, threshold, as_dict=1)
+    
+    for b in bins:
+        frappe.log_error(f"Low stock alert for {b.item_code} in {b.warehouse}: {b.actual_qty} remaining.", "Van Low Stock Alert")
+        
+    return {'status': 'success', 'low_stock_items_count': len(bins)}
