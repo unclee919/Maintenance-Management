@@ -3,6 +3,23 @@ from frappe import _
 from frappe.utils import flt, now, now_datetime, time_diff_in_hours, get_url
 import math
 
+def get_field_maintenance_settings():
+    try:
+        records = frappe.get_all("Field Maintenance Settings", limit=1)
+        if records:
+            return frappe.get_doc("Field Maintenance Settings", records[0].name)
+        s = frappe.new_doc("Field Maintenance Settings")
+        s.insert(ignore_permissions=True)
+        return s
+    except Exception:
+        return frappe._dict({
+            "weighted_criteria": [],
+            "notification_title_template": "🛠️ New Dispatch: {sales_order}",
+            "notification_message_template": "Customer: {customer}\nTime: {time}",
+            "notification_sound": "Chime",
+            "enable_mobile_push": 1
+        })
+
 def _ensure_sql_patch():
     """Ensures necessary SQL indexes exist for performance"""
     try:
@@ -74,7 +91,7 @@ def assign_technician_weighted(doc):
     if isinstance(doc, str):
         doc = frappe.get_doc("Sales Order", doc)
     
-    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+    settings = get_field_maintenance_settings()
     weights = {}
     for row in settings.get("weighted_criteria", []):
         if row.enabled:
@@ -111,9 +128,8 @@ def assign_technician_weighted(doc):
 
 def assign_technician_weighted_for_item(doc, item):
     """7-Criteria Weighted Assignment Engine per Sales Order Item"""
-    try:
-        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
-    except frappe.DoesNotExistError:
+    settings = get_field_maintenance_settings()
+    if not settings:
         return None
     weights = {}
     for row in settings.get("weighted_criteria", []):
@@ -291,10 +307,7 @@ def send_technician_notification(doc, appointment_name, technician_override=None
     target_user = tech_doc.get("user") or "Administrator"
     user_email = frappe.db.get_value("User", target_user, "email")
     
-    try:
-        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
-    except frappe.DoesNotExistError:
-        settings = frappe.new_doc("Field Maintenance Settings")
+    settings = get_field_maintenance_settings()
     title_tpl = settings.get("notification_title_template") or "🛠️ New Dispatch: {sales_order}"
     msg_tpl = settings.get("notification_message_template") or "Customer: {customer}\nTime: {time}"
     sound_effect = settings.get("notification_sound") or "Chime"
@@ -424,7 +437,7 @@ def update_technician_location(sales_order, latitude=None, longitude=None, track
                 return {"status": "error", "message": "No technician found"}
 
         tech = frappe.get_doc("Field Technician", tech_name)
-        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+        settings = get_field_maintenance_settings()
         
         if latitude is None or longitude is None or tracking_status == "interrupted":
             tech.db_set("status", "GPS Interrupted")
