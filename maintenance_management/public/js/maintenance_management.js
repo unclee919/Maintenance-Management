@@ -1,12 +1,28 @@
 // Maintenance Management Global JS & Push Notification Handler
 $(document).ready(function() {
+    console.log("Maintenance Management: Global script loaded.");
+
     // Request browser notification permission
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
         Notification.requestPermission();
     }
 
-    // Function to play customizable audio alerts using Web Audio API
-    function playAlertSound(soundType) {
+    // Function to play customizable audio alerts
+    function playAlertSound(soundType, customFileUrl) {
+        console.log("Maintenance Management: Playing sound", soundType, customFileUrl);
+        
+        // Handle custom file upload
+        if (soundType === "Custom" && customFileUrl) {
+            try {
+                var audio = new Audio(customFileUrl);
+                audio.play().catch(e => console.log("Custom audio play error:", e));
+                return;
+            } catch (e) {
+                console.log("Audio file error:", e);
+            }
+        }
+
+        // Fallback to Web Audio API synthesis
         try {
             var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             var osc = audioCtx.createOscillator();
@@ -50,7 +66,7 @@ $(document).ready(function() {
                 osc.stop(now + 0.3);
             }
         } catch (e) {
-            console.log("Audio play error:", e);
+            console.log("Audio synthesis error:", e);
         }
     }
 
@@ -59,21 +75,28 @@ $(document).ready(function() {
         console.log("Maintenance Management: Real-time listener initialized.");
         frappe.realtime.on("maintenance_notification", function(data) {
             console.log("Maintenance Notification Received:", data);
-            // 1. Show Browser Native Push Notification
+            
+            // 1. Play Sound
+            playAlertSound(data.sound, data.sound_file);
+
+            // 2. Show Browser Native Push Notification
             if (typeof Notification !== "undefined" && Notification.permission === "granted") {
                 try {
                     var n = new Notification(data.title, {
                         body: data.message,
-                        tag: data.docname
+                        tag: data.docname,
+                        icon: "/assets/maintenance_management/octicon-tools.png"
                     });
                     n.onclick = function() {
                         window.focus();
                         frappe.set_route("Form", "Service Appointment", data.docname);
                     };
-                } catch (e) {}
+                } catch (e) {
+                    console.log("Push notification error:", e);
+                }
             }
-
-            // 2. Show Frappe Toast Alert
+            
+            // 3. Show Frappe Toast Alert
             if (typeof frappe.show_alert === "function") {
                 frappe.show_alert({
                     message: __("<b>{0}</b><br>{1}", [data.title, data.message]),
@@ -81,8 +104,10 @@ $(document).ready(function() {
                 }, 10);
             }
 
-            // 3. Play Sound Effect
-            playAlertSound(data.sound || "Chime");
+            // 4. Update the notification bell count
+            if (frappe.ui.notifications) {
+                frappe.ui.notifications.update_notifications();
+            }
         });
     }
 });

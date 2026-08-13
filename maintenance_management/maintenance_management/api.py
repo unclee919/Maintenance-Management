@@ -39,62 +39,43 @@ def fix_workspace():
 
 def after_migrate():
     import json
-    # 1. Create Number Cards if not exist
-    cards = [
-        {"name": "Active Service Orders Count", "label": "Active Service Orders", "function": "Count", "document_type": "Sales Order", "filters": '[["Sales Order", "status", "!=", "Completed"]]'},
-        {"name": "Pending Invoices Count", "label": "Pending Invoices", "function": "Count", "document_type": "Sales Invoice", "filters": '[["Sales Invoice", "status", "=", "Unpaid"]]'},
-        {"name": "Available Technicians", "label": "Available Technicians", "function": "Count", "document_type": "Field Technician", "filters": '[["Field Technician", "status", "=", "Available"]]'},
-        {"name": "Total Maintenance Revenue", "label": "Maintenance Revenue", "function": "Sum", "aggregate_function_based_on": "grand_total", "document_type": "Sales Invoice"},
-        {"name": "Avg Response Time", "label": "Avg Response Time (Mins)", "type": "Custom", "function": "Count", "document_type": "Sales Order"},
-        {"name": "Avg Repair Duration", "label": "Avg Repair Duration (Mins)", "type": "Custom", "function": "Count", "document_type": "Sales Order"}
-    ]
     
-    for c in cards:
-        if not frappe.db.exists("Number Card", c["name"]):
-            if not frappe.db.exists("Module Def", "Maintenance Management"):
-                m = frappe.get_doc({"doctype": "Module Def", "module_name": "Maintenance Management"})
-                m.insert(ignore_permissions=True)
-            doc = frappe.get_doc({
-                "doctype": "Number Card",
-                "name": c["name"],
-                "label": c["label"],
-                "type": "Document Type",
-                "document_type": c["document_type"],
-                "function": c["function"],
-                "aggregate_function_based_on": c.get("aggregate_function_based_on"),
-                "filters_json": c.get("filters", "[]"),
-                "is_standard": 0,
-                "module": "Maintenance Management"
-            })
-            doc.insert(ignore_permissions=True)
-            
-    # 2. Create Number Cards if not exist
+    # Ensure Module Def exists
+    if not frappe.db.exists("Module Def", "Maintenance Management"):
+        frappe.get_doc({"doctype": "Module Def", "module_name": "Maintenance Management"}).insert(ignore_permissions=True)
+
+    # 1. Create Number Cards
     cards = [
-        ("Active Service Orders Count", "Sales Order", "Count", {"custom_maintenance_status": ["not in", ["Completed", "Cancelled"]]}),
-        ("Pending Invoices Count", "Sales Invoice", "Count", {"status": "Unpaid"}),
+        ("Active Service Orders Count", "Sales Order", "Count", {"custom_maintenance_status": ["not in", ["Completed", "Cancelled"]]}, None),
+        ("Pending Invoices Count", "Sales Invoice", "Count", {"status": "Unpaid"}, None),
         ("Avg Response Time", "Service Appointment", "Average", {}, "duration_hours"),
         ("Avg Repair Duration", "Service Appointment", "Average", {}, "duration_hours"),
         ("Total Maintenance Revenue", "Sales Order", "Sum", {"custom_is_maintenance_order": 1}, "base_grand_total"),
         ("CSAT Rating", "Sales Order", "Average", {"custom_is_maintenance_order": 1}, "custom_customer_rating"),
-        ("My Open Orders", "Sales Order", "Count", {"custom_maintenance_status": ["not in", ["Completed", "Cancelled"]]}),
-        ("My Completed Today", "Sales Order", "Count", {"custom_maintenance_status": "Completed"}),
+        ("My Open Orders", "Sales Order", "Count", {"custom_maintenance_status": ["not in", ["Completed", "Cancelled"]]}, None),
+        ("My Completed Today", "Sales Order", "Count", {"custom_maintenance_status": "Completed"}, None),
         ("My Efficiency Score", "Field Technician", "Average", {}, "performance_rating")
     ]
-    for name, dt, func, filters, field in [(c[0], c[1], c[2], c[3], c[4] if len(c)>4 else None) for c in cards]:
+    
+    for name, dt, func, filters, field in cards:
         if not frappe.db.exists("Number Card", name):
-            card = frappe.get_doc({
-                "doctype": "Number Card",
-                "label": name,
-                "document_type": dt,
-                "function": func,
-                "aggregate_function_fieldname": field,
-                "filters_json": json.dumps(filters),
-                "is_standard": 0,
-                "module": "Maintenance Management"
-            })
-            card.insert(ignore_permissions=True)
+            try:
+                card = frappe.get_doc({
+                    "doctype": "Number Card",
+                    "name": name,
+                    "label": name,
+                    "document_type": dt,
+                    "function": func,
+                    "aggregate_function_fieldname": field,
+                    "filters_json": json.dumps(filters),
+                    "is_standard": 0,
+                    "module": "Maintenance Management"
+                })
+                card.insert(ignore_permissions=True)
+            except Exception:
+                pass
 
-    # 2. Create Charts if not exist
+    # 2. Create Charts
     if not frappe.db.exists("Dashboard Chart", "Orders by Status"):
         chart = frappe.get_doc({
             "doctype": "Dashboard Chart",

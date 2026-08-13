@@ -33,13 +33,19 @@
    "fieldtype": "Small Text",
    "label": "Notification Message Template"
   },
-  {
-   "default": "Chime",
-   "fieldname": "notification_sound",
-   "fieldtype": "Select",
-   "label": "Notification Sound Effect",
-   "options": "Default\\nChime\\nBeep\\nAlert"
-  },
+	  {
+	   "default": "Chime",
+	   "fieldname": "notification_sound",
+	   "fieldtype": "Select",
+	   "label": "Notification Sound Effect",
+	   "options": "Default\\nChime\\nBeep\\nAlert\\nCustom"
+	  },
+	  {
+	   "fieldname": "notification_sound_file",
+	   "fieldtype": "Attach",
+	   "label": "Custom Notification Sound File",
+	   "depends_on": "eval:doc.notification_sound=='Custom'"
+	  },
   {
    "default": "1",
    "fieldname": "enable_mobile_push",
@@ -240,7 +246,7 @@
 				 ],
  "icon": "octicon octicon-settings",
  "idx": 1,
- "is_single": 0,
+	 "is_single": 1,
  "links": [],
  "modified": "2026-08-12 00:00:00.000000",
  "modified_by": "Administrator",

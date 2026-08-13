@@ -347,6 +347,7 @@ def send_technician_notification(doc, appointment_name, technician_override=None
                     "message": formatted_msg,
                     "docname": appointment_name,
                     "sound": sound_effect,
+                    "sound_file": settings.notification_sound_file,
                     "push": True
                 },
                 user=target_user,
