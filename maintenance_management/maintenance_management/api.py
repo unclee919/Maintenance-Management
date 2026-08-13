@@ -208,7 +208,7 @@ def after_migrate():
     
     # 7. Initialize Assignment Criteria in Settings
     try:
-        settings = frappe.get_doc("Field Maintenance Settings")
+        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     except frappe.DoesNotExistError:
         settings = frappe.new_doc("Field Maintenance Settings")
         settings.insert(ignore_permissions=True)
@@ -289,7 +289,7 @@ def get_maintenance_kpis():
 def whatsapp_webhook_receiver(phone=None, message=None, customer_name=None, equipment=None, problem=None):
     """WhatsApp Business webhook receiver and chatbot logic to intake service orders and quote visit prices."""
     try:
-        settings = frappe.get_doc("Field Maintenance Settings")
+        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
         visit_fee = settings.get("default_service_fee") or 150.0
         
         if not phone or not problem:
@@ -327,7 +327,7 @@ def whatsapp_webhook_receiver(phone=None, message=None, customer_name=None, equi
 @frappe.whitelist()
 def send_whatsapp_notification(phone, message):
     """Simulates sending a WhatsApp notification via WhatsApp Business API (can be configured via Field Maintenance Settings)."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     enabled = settings.get("enable_whatsapp_notifications")
     
     frappe.logger().info(f"[WhatsApp Notification] To: {phone} | Message: {message} | Enabled: {enabled}")
@@ -438,7 +438,7 @@ def technician_add_billing_items(sales_order, items):
     grand_total = doc.grand_total
     currency = doc.currency or "EGP"
     
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     payment_link_enabled = settings.get("enable_online_payment_link")
     gateway_url = settings.get("payment_gateway_url") or "https://pay.elmrkz.cloud/pay"
     
@@ -462,7 +462,7 @@ def technician_add_billing_items(sales_order, items):
 @frappe.whitelist()
 def send_automated_monthly_report():
     """Generates and sends automated monthly performance report summarizing customer satisfaction and technician efficiency."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     if not settings.get("enable_monthly_report"):
         return {"status": "disabled", "message": "Monthly reports are disabled in Field Maintenance Settings."}
         
@@ -494,7 +494,7 @@ def send_automated_monthly_report():
 
 def check_technician_response_threshold(sales_order_name, response_time_mins):
     """Checks if technician response time exceeds the threshold configured in Field Maintenance Settings and triggers alert."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     threshold = settings.get("response_time_threshold_mins") or 30
     
     if response_time_mins > threshold:
@@ -533,7 +533,7 @@ def sales_order_permission_query(user):
 @frappe.whitelist()
 def send_automated_weekly_report():
     """Generates and sends automated weekly technician performance report summarizing key efficiency metrics, spare parts breakdown, and WhatsApp group routing."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     if not settings.get("enable_weekly_report"):
         return {"status": "disabled", "message": "Weekly reports are disabled in Field Maintenance Settings."}
         
@@ -675,7 +675,7 @@ def technician_transfer_spare_parts(from_technician, to_technician, items):
 @frappe.whitelist()
 def check_van_warehouse_low_stock(warehouse=None):
     """Checks van warehouse stock levels against threshold configured in Field Maintenance Settings and triggers WhatsApp alert."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     if not settings.get("enable_low_stock_alerts"):
         return {"status": "disabled", "message": "Low-stock alerts are disabled in Field Maintenance Settings."}
         
@@ -704,7 +704,7 @@ def check_van_warehouse_low_stock(warehouse=None):
 @frappe.whitelist()
 def check_van_warehouse_low_stock(warehouse=None):
     """Checks van warehouse stock levels against threshold, triggers WhatsApp alerts, and auto-creates Material Requests if enabled."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     if not settings.get("enable_low_stock_alerts"):
         return {"status": "disabled", "message": "Low-stock alerts are disabled in Field Maintenance Settings."}
         
@@ -813,7 +813,7 @@ def get_spare_parts_forecast():
 @frappe.whitelist()
 def get_spare_parts_forecast():
     """Predictive spare parts consumption forecast and auto-PO generation when 7-day demand exceeds stock."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     enable_po = settings.get("enable_forecast_auto_po")
     
     forecast = [
@@ -880,7 +880,7 @@ def get_technician_utilization_summary():
 @frappe.whitelist()
 def send_automated_daily_utilization_report():
     """Generates and sends automated daily technician utilization summary to regional supervisors via email and WhatsApp."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     if not settings.get("enable_daily_utilization_report"):
         return {"status": "disabled"}
         
@@ -986,7 +986,7 @@ def get_comparative_cost_analysis():
 # Update send_automated_daily_utilization_report to include cost analysis
 def send_automated_daily_utilization_report():
     """Generates and sends automated daily technician utilization summary and cost analysis to regional supervisors."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     if not settings.get("enable_daily_utilization_report"):
         return {"status": "disabled"}
         
@@ -1020,7 +1020,7 @@ def send_automated_daily_utilization_report():
 @frappe.whitelist()
 def check_price_fluctuation_alert(item_code, old_price, new_price):
     """Triggers emergency supervisor notification if price fluctuation exceeds threshold."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     if not settings.get("enable_price_alert"):
         return {"status": "disabled"}
         
@@ -1053,7 +1053,7 @@ def check_price_fluctuation_alert(item_code, old_price, new_price):
 @frappe.whitelist()
 def get_optimal_supplier_with_fallback(item_code):
     """Dynamically selects preferred supplier, with automatic fallback routing if primary is out of stock."""
-    settings = frappe.get_doc("Field Maintenance Settings")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     enable_fallback = settings.get("enable_fallback_supplier")
     
     primary_supplier = get_optimal_supplier_for_item(item_code)
@@ -1534,7 +1534,7 @@ def audit_error():
         print("-" * 40)
         
     try:
-        s = frappe.get_doc("Field Maintenance Settings")
+        s = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
         print("get_doc('Field Maintenance Settings') succeeded:", s.name)
     except Exception as e:
         print("get_doc('Field Maintenance Settings') failed:", str(e))
@@ -1570,7 +1570,7 @@ def ensure_settings():
 @frappe.whitelist()
 def test_settings():
     try:
-        doc = frappe.get_doc("Field Maintenance Settings")
+        doc = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
         print("SUCCESS LOAD:", doc.name)
         return {"status": "success", "name": doc.name}
     except Exception as e:

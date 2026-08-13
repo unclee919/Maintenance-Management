@@ -112,7 +112,7 @@ def assign_technician_weighted(doc):
 def assign_technician_weighted_for_item(doc, item):
     """7-Criteria Weighted Assignment Engine per Sales Order Item"""
     try:
-        settings = frappe.get_doc("Field Maintenance Settings")
+        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     except frappe.DoesNotExistError:
         return None
     weights = {}
@@ -292,7 +292,7 @@ def send_technician_notification(doc, appointment_name, technician_override=None
     user_email = frappe.db.get_value("User", target_user, "email")
     
     try:
-        settings = frappe.get_doc("Field Maintenance Settings")
+        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     except frappe.DoesNotExistError:
         settings = frappe.new_doc("Field Maintenance Settings")
     title_tpl = settings.get("notification_title_template") or "🛠️ New Dispatch: {sales_order}"
