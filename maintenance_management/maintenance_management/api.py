@@ -1239,3 +1239,73 @@ def iot_sensor_fault_webhook_with_nearest_dispatch(sensor_id, equipment_id, faul
         "distance_km": round(min_distance, 2),
         "message": f"Emergency order {so.name} dispatched to nearest technician {assigned_tech} successfully."
     }
+
+@frappe.whitelist()
+def fix_service_appointment_client_script():
+    client_script_name = "Service Appointment Map and Location Fix"
+    existing = frappe.db.exists("Client Script", {"dt": "Service Appointment"})
+    
+    script_code = """
+frappe.ui.form.on('Service Appointment', {
+    refresh: function(frm) {
+        if (!frm.fields_dict['open_map_btn']) {
+            frm.add_custom_button(__('Open Map Location'), function() {
+                let lat = frm.doc.latitude;
+                let lng = frm.doc.longitude;
+                if (!lat || !lng) {
+                    if (frm.doc.sales_order) {
+                        frappe.db.get_value('Sales Order', frm.doc.sales_order, ['latitude', 'longitude'], function(r) {
+                            if (r && r.latitude && r.longitude) {
+                                window.open('https://www.google.com/maps/search/?api=1&query=' + r.latitude + ',' + r.longitude, '_blank');
+                            } else {
+                                frappe.msgprint(__('No location coordinates available for this Service Appointment or linked Sales Order.'));
+                            }
+                        });
+                    } else {
+                        frappe.msgprint(__('No location coordinates available.'));
+                    }
+                } else {
+                    window.open('https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lng, '_blank');
+                }
+            });
+        }
+        
+        if ((!frm.doc.latitude || !frm.doc.longitude) && frm.doc.sales_order) {
+            frappe.db.get_value('Sales Order', frm.doc.sales_order, ['latitude', 'longitude'], function(r) {
+                if (r && r.latitude && r.longitude) {
+                    frm.set_value('latitude', r.latitude);
+                    frm.set_value('longitude', r.longitude);
+                }
+            });
+        }
+    },
+    sales_order: function(frm) {
+        if (frm.doc.sales_order) {
+            frappe.db.get_value('Sales Order', frm.doc.sales_order, ['latitude', 'longitude'], function(r) {
+                if (r && r.latitude && r.longitude) {
+                    frm.set_value('latitude', r.latitude);
+                    frm.set_value('longitude', r.longitude);
+                }
+            });
+        }
+    }
+});
+"""
+
+    if existing:
+        cs = frappe.get_doc("Client Script", existing)
+        cs.script = script_code
+        cs.save()
+    else:
+        cs = frappe.get_doc({
+            "doctype": "Client Script",
+            "name": client_script_name,
+            "dt": "Service Appointment",
+            "script": script_code,
+            "view": "Form",
+            "enabled": 1
+        })
+        cs.insert(ignore_permissions=True)
+
+    frappe.db.commit()
+    return "Service Appointment Client Script updated successfully."
