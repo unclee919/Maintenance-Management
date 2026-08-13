@@ -358,18 +358,24 @@ def send_technician_notification(doc, appointment_name, technician_override=None
                 "document_name": appointment_name
             }).insert(ignore_permissions=True)
             
-            # Real-time notification with sound & mobile push
+            # Real-time notification with sound & mobile push (targeted & global broadcast for instant visibility)
+            notification_payload = {
+                "title": formatted_title,
+                "message": formatted_msg,
+                "docname": appointment_name,
+                "sound": sound_effect,
+                "sound_file": settings.get("notification_sound_file", ""),
+                "push": True
+            }
             frappe.publish_realtime(
                 "maintenance_notification",
-                {
-                    "title": formatted_title,
-                    "message": formatted_msg,
-                    "docname": appointment_name,
-                    "sound": sound_effect,
-                    "sound_file": settings.notification_sound_file,
-                    "push": True
-                },
+                notification_payload,
                 user=target_user,
+                after_commit=True
+            )
+            frappe.publish_realtime(
+                "maintenance_notification",
+                notification_payload,
                 after_commit=True
             )
             
