@@ -1434,3 +1434,23 @@ def fix_settings():
         
     frappe.db.commit()
     return "Settings fixed successfully"
+
+@frappe.whitelist()
+def audit_error():
+    print("=== AUDITING NOTIFICATIONS AND SETTINGS ===")
+    notifications = frappe.get_all("Notification", filters={"document_type": "Sales Order"}, fields=["name", "subject", "condition", "message"])
+    for n in notifications:
+        print(f"Notification: {n.name}")
+        print(f"Condition: {n.condition}")
+        print(f"Message/Subject: {n.subject}")
+        print("-" * 40)
+        
+    try:
+        s = frappe.get_doc("Field Maintenance Settings")
+        print("get_doc('Field Maintenance Settings') succeeded:", s.name)
+    except Exception as e:
+        print("get_doc('Field Maintenance Settings') failed:", str(e))
+        
+    recs = frappe.db.sql("SELECT * FROM `tabField Maintenance Settings`", as_dict=True)
+    print("Table records:", recs)
+    return {"status": "audited", "notifications_count": len(notifications), "records": recs}
