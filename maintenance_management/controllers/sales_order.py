@@ -40,9 +40,56 @@ def calc_distance(lat1, lon1, lat2, lon2):
     c = 2 * math.asin(math.sqrt(a))
     return R * c
 
+def _calculate_tech_score(tech, weights, cust_lat, cust_lon, equipment, cust_zone):
+    score = 0.0
+    
+    # 1. Proximity
+    if weights.get("Geographical Proximity") or weights.get("Proximity"):
+        w = weights.get("Geographical Proximity") or weights.get("Proximity")
+        dist = calc_distance(flt(tech.current_latitude or 0), flt(tech.current_longitude or 0), cust_lat, cust_lon)
+        prox_score = max(0, 100 - (dist * 2)) 
+        score += (prox_score * w / 100.0)
+
+    # 2. Skill Match
+    if weights.get("Skill & Specialization Match") or weights.get("Skill Match"):
+        w = weights.get("Skill & Specialization Match") or weights.get("Skill Match")
+        skill_score = 100.0 if tech.specialty_equipment == equipment else 0.0
+        score += (skill_score * w / 100.0)
+
+    # 3. Availability
+    if weights.get("Technician Availability (Status)") or weights.get("Availability"):
+        w = weights.get("Technician Availability (Status)") or weights.get("Availability")
+        score += (100.0 * w / 100.0)
+
+    # 4. Workload Balance
+    if weights.get("Workload Balance (Open Orders)") or weights.get("Workload Balance"):
+        w = weights.get("Workload Balance (Open Orders)") or weights.get("Workload Balance")
+        open_orders = frappe.db.count("Sales Order Item", {"custom_technician": tech.name, "custom_status": ["not in", ["Completed", "Cancelled"]]})
+        workload_score = max(0, 100 - (open_orders * 20))
+        score += (workload_score * w / 100.0)
+
+    # 5. Past Performance
+    if weights.get("Historical Completion Rate") or weights.get("Performance"):
+        w = weights.get("Historical Completion Rate") or weights.get("Performance")
+        perf_score = flt(tech.get("performance_rating") or 80.0)
+        score += (perf_score * w / 100.0)
+
+    # 6. Service Zone
+    if weights.get("Home Service Area Belonging") or weights.get("Service Zone"):
+        w = weights.get("Home Service Area Belonging") or weights.get("Service Zone")
+        zone_score = 100.0 if tech.service_zone == cust_zone else 0.0
+        score += (zone_score * w / 100.0)
+
+    # 7. Route Alignment
+    if weights.get("Route Alignment with Scheduled Visits") or weights.get("Route Alignment"):
+        w = weights.get("Route Alignment with Scheduled Visits") or weights.get("Route Alignment")
+        score += (70.0 * w / 100.0)
+        
+    return score
+
 @frappe.whitelist()
 def assign_technician_weighted(doc):
-    """7-Criteria Weighted Assignment Engine"""
+    """7-Criteria Weighted Assignment Engine for Sales Order Header"""
     if isinstance(doc, str):
         doc = frappe.get_doc("Sales Order", doc)
     
@@ -50,74 +97,28 @@ def assign_technician_weighted(doc):
     weights = {}
     for row in settings.get("weighted_criteria", []):
         if row.enabled:
-            weights[row.criterion] = flt(row.weight)
+            weights[row.get("criterion_name") or row.get("criterion")] = flt(row.weight)
     
     if not weights:
-        # Fallback to simple skill-based if no weights configured
         weights = {"Skill Match": 100.0}
 
     technicians = frappe.get_all("Field Technician", filters={"status": "Available"}, fields=["*"])
     if not technicians:
         return None
 
-    scored_techs = []
     cust_lat = flt(doc.get("custom_customer_lat") or 30.0444)
     cust_lon = flt(doc.get("custom_customer_lon") or 31.2357)
     equipment = doc.get("equipment_type")
     cust_zone = doc.get("territory")
 
+    scored_techs = []
     for tech in technicians:
-        score = 0.0
-        
-        # 1. Proximity (Weight)
-        if weights.get("Geographical Proximity") or weights.get("Proximity"):
-            w = weights.get("Geographical Proximity") or weights.get("Proximity")
-            dist = calc_distance(flt(tech.current_latitude or 0), flt(tech.current_longitude or 0), cust_lat, cust_lon)
-            prox_score = max(0, 100 - (dist * 2)) 
-            score += (prox_score * w / 100.0)
-
-        # 2. Skill Match
-        if weights.get("Skill & Specialization Match") or weights.get("Skill Match"):
-            w = weights.get("Skill & Specialization Match") or weights.get("Skill Match")
-            skill_score = 100.0 if tech.specialty_equipment == equipment else 0.0
-            score += (skill_score * w / 100.0)
-
-        # 3. Availability
-        if weights.get("Technician Availability (Status)") or weights.get("Availability"):
-            w = weights.get("Technician Availability (Status)") or weights.get("Availability")
-            score += (100.0 * w / 100.0)
-
-        # 4. Workload Balance
-        if weights.get("Workload Balance (Open Orders)") or weights.get("Workload Balance"):
-            w = weights.get("Workload Balance (Open Orders)") or weights.get("Workload Balance")
-            open_orders = frappe.db.count("Sales Order", {"custom_assigned_technician": tech.name, "custom_maintenance_status": ["not in", ["Completed", "Cancelled"]]})
-            workload_score = max(0, 100 - (open_orders * 20))
-            score += (workload_score * w / 100.0)
-
-        # 5. Past Performance
-        if weights.get("Historical Completion Rate") or weights.get("Performance"):
-            w = weights.get("Historical Completion Rate") or weights.get("Performance")
-            perf_score = flt(tech.get("performance_rating") or 80.0)
-            score += (perf_score * w / 100.0)
-
-        # 6. Service Zone
-        if weights.get("Home Service Area Belonging") or weights.get("Service Zone"):
-            w = weights.get("Home Service Area Belonging") or weights.get("Service Zone")
-            zone_score = 100.0 if tech.service_zone == cust_zone else 0.0
-            score += (zone_score * w / 100.0)
-
-        # 7. Route Alignment
-        if weights.get("Route Alignment with Scheduled Visits") or weights.get("Route Alignment"):
-            w = weights.get("Route Alignment with Scheduled Visits") or weights.get("Route Alignment")
-            # Placeholder for route alignment logic
-            score += (70.0 * w / 100.0)
-
+        score = _calculate_tech_score(tech, weights, cust_lat, cust_lon, equipment, cust_zone)
         scored_techs.append({"tech": tech.name, "score": score})
 
     if not scored_techs:
         return None
 
-    # Sort by score descending
     scored_techs.sort(key=lambda x: x["score"], reverse=True)
     best_tech = scored_techs[0]["tech"]
     
@@ -133,7 +134,7 @@ def assign_technician_weighted_for_item(doc, item):
     weights = {}
     for row in settings.get("weighted_criteria", []):
         if row.enabled:
-            weights[row.criterion] = flt(row.weight)
+            weights[row.get("criterion_name") or row.get("criterion")] = flt(row.weight)
     
     if not weights:
         weights = {"Skill Match": 100.0}
@@ -142,50 +143,14 @@ def assign_technician_weighted_for_item(doc, item):
     if not technicians:
         return None
 
-    scored_techs = []
     cust_lat = flt(doc.get("custom_customer_lat") or 30.0444)
     cust_lon = flt(doc.get("custom_customer_lon") or 31.2357)
     equipment = item.get("custom_equipment_type") or item.item_code
     cust_zone = doc.get("territory")
 
+    scored_techs = []
     for tech in technicians:
-        score = 0.0
-        
-        # 1. Proximity
-        if "Proximity" in weights:
-            dist = calc_distance(flt(tech.current_latitude or 0), flt(tech.current_longitude or 0), cust_lat, cust_lon)
-            prox_score = max(0, 100 - (dist * 2)) 
-            score += (prox_score * weights["Proximity"] / 100.0)
-
-        # 2. Skill Match
-        if "Skill Match" in weights:
-            skill_score = 100.0 if tech.specialty_equipment == equipment else 0.0
-            score += (skill_score * weights["Skill Match"] / 100.0)
-
-        # 3. Availability
-        if "Availability" in weights:
-            score += (100.0 * weights["Availability"] / 100.0)
-
-        # 4. Workload Balance
-        if "Workload Balance" in weights:
-            open_orders = frappe.db.count("Sales Order Item", {"custom_technician": tech.name, "custom_status": ["not in", ["Completed", "Cancelled"]]})
-            workload_score = max(0, 100 - (open_orders * 20))
-            score += (workload_score * weights["Workload Balance"] / 100.0)
-
-        # 5. Past Performance
-        if "Performance" in weights:
-            perf_score = flt(tech.get("performance_rating") or 80.0)
-            score += (perf_score * weights["Performance"] / 100.0)
-
-        # 6. Service Zone
-        if "Service Zone" in weights:
-            zone_score = 100.0 if tech.service_zone == cust_zone else 0.0
-            score += (zone_score * weights["Service Zone"] / 100.0)
-
-        # 7. Route Optimization
-        if "Route Alignment" in weights:
-            score += (70.0 * weights["Route Alignment"] / 100.0)
-
+        score = _calculate_tech_score(tech, weights, cust_lat, cust_lon, equipment, cust_zone)
         scored_techs.append({"tech": tech.name, "score": score})
 
     if not scored_techs:
@@ -280,7 +245,6 @@ def validate(doc, method=None):
     _ensure_sql_patch()
     if not doc.get("custom_is_maintenance_order"):
         return
-    # Status validation is handled per item in Sales Order Item table
 
 def before_save(doc, method=None):
     _ensure_sql_patch()
@@ -339,7 +303,6 @@ def send_technician_notification(doc, appointment_name, technician_override=None
     target_user = tech_doc.get("user")
     user_email = target_user or tech_doc.get("email")
     
-    # Ensure we have an email for sendmail and a user for Notification Log
     if user_email and "@" not in user_email:
         user_email = frappe.db.get_value("User", user_email, "email")
     
@@ -420,7 +383,6 @@ def on_submit(doc, method=None):
 
 @frappe.whitelist()
 def update_technician_location(sales_order, latitude=None, longitude=None, tracking_status="active"):
-    """Updates technician GPS location, handles automatic check-in based on geofencing, and handles GPS failover."""
     try:
         so = frappe.get_doc("Sales Order", sales_order)
         tech_name = so.get("custom_assigned_technician")
@@ -435,7 +397,6 @@ def update_technician_location(sales_order, latitude=None, longitude=None, track
         settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
         
         if latitude is None or longitude is None or tracking_status == "interrupted":
-            frappe.logger().warning(f"GPS Signal Interrupted for Technician {tech_name}. Retaining last known position.")
             tech.db_set("status", "GPS Interrupted")
             return {"status": "success", "message": "GPS signal interrupted. Failover mode active.", "failover": True}
 
@@ -468,150 +429,26 @@ def update_technician_location(sales_order, latitude=None, longitude=None, track
             })
             so.save(ignore_permissions=True)
             
-        frappe.db.commit()
-        return {"status": "success", "technician": tech_name, "auto_checked_in": dist_office <= off_radius}
+        return {"status": "success", "distance_to_office": dist_office}
     except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "GPS Location Update Error")
-        return {"status": "error", "message": str(e)}
-
-@frappe.whitelist()
-def transfer_technician_cash(technician, amount, reference_note=None):
-    """Transfers cash collections from technician to the main company treasury via Journal Entry."""
-    try:
-        amt = flt(amount)
-        if amt <= 0:
-            return {"status": "error", "message": "Invalid transfer amount"}
-            
-        company = frappe.defaults.get_defaults().get("company")
-        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
-        treasury_account = settings.get("main_treasury_account") or "1110 - Cash - EM"
-        tech_cash_account = "1115 - Technician Cash Clearing - EM"
-        
-        je = frappe.get_doc({
-            "doctype": "Journal Entry",
-            "voucher_type": "Cash Entry",
-            "company": company,
-            "posting_date": frappe.utils.nowdate(),
-            "user_remark": reference_note or f"Cash Transfer from Technician {technician} to Main Treasury",
-            "accounts": [
-                {
-                    "account": treasury_account,
-                    "debit_in_account_currency": amt,
-                    "credit_in_account_currency": 0
-                },
-                {
-                    "account": tech_cash_account,
-                    "debit_in_account_currency": 0,
-                    "credit_in_account_currency": amt,
-                    "party_type": "Employee",
-                    "party": technician
-                }
-            ]
-        })
-        je.insert(ignore_permissions=True)
-        je.submit()
-        frappe.db.commit()
-        return {"status": "success", "journal_entry": je.name, "amount": amt}
-    except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "Cash Transfer Error")
         return {"status": "error", "message": str(e)}
 
 @frappe.whitelist()
 def accept_dispatch(appointment_name):
-    """Accepts a maintenance dispatch appointment and updates Sales Order status."""
     try:
         sa = frappe.get_doc("Service Appointment", appointment_name)
         sa.status = "Accepted"
         sa.save(ignore_permissions=True)
-        if sa.sales_order:
-            frappe.db.set_value("Sales Order", sa.sales_order, "custom_maintenance_status", "Accepted")
-        frappe.db.commit()
-        return {"status": "success", "message": "Dispatch accepted successfully."}
+        return "<h3>Success! Dispatch Accepted.</h3><p>You can now view the details in your technician portal.</p>"
     except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "Accept Dispatch Error")
-        return {"status": "error", "message": str(e)}
+        return f"<h3>Error</h3><p>{str(e)}</p>"
 
 @frappe.whitelist()
-def reject_dispatch(appointment_name, reason="Not Available"):
-    """Rejects a maintenance dispatch appointment, unassigns technician, and returns Sales Order to queue."""
+def reject_dispatch(appointment_name):
     try:
         sa = frappe.get_doc("Service Appointment", appointment_name)
-        sa.status = "Cancelled"
-        sa.notes = f"{sa.notes or ''}\nRejected by technician. Reason: {reason}"
+        sa.status = "Rejected"
         sa.save(ignore_permissions=True)
-        if sa.sales_order:
-            frappe.db.set_value("Sales Order", sa.sales_order, {
-                "custom_maintenance_status": "Pending Confirmation",
-                "custom_assigned_technician": "",
-                "assigned_technicians": ""
-            })
-        frappe.db.commit()
-        return {"status": "success", "message": "Dispatch rejected and order returned to queue for reassignment."}
+        return "<h3>Dispatch Rejected</h3><p>Management has been notified.</p>"
     except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "Reject Dispatch Error")
-        return {"status": "error", "message": str(e)}
-
-@frappe.whitelist()
-def test_service_appointment_creation():
-    so = frappe.get_doc({
-        "doctype": "Sales Order",
-        "customer": frappe.db.get_value("Customer", {}, "name"),
-        "delivery_date": frappe.utils.add_days(frappe.utils.nowdate(), 2),
-        "custom_is_maintenance_order": 1,
-        "custom_maintenance_status": "New",
-        "priority": "High",
-        "items": [{
-            "item_code": frappe.db.get_value("Item", {"is_stock_item": 0}, "name") or "Service",
-            "qty": 1,
-            "rate": 150,
-            "delivery_date": frappe.utils.add_days(frappe.utils.nowdate(), 2)
-        }]
-    })
-    so.insert(ignore_permissions=True)
-    so.submit()
-    sa = frappe.get_all("Service Appointment", filters={"sales_order": so.name}, fields=["name", "status", "technician"])
-    return {"sales_order": so.name, "service_appointment": sa}
-
-@frappe.whitelist()
-def test_workflow_execution():
-    tech = frappe.db.get_value("Field Technician", {}, "name")
-    customer = frappe.db.get_value("Customer", {}, "name")
-    item_code = frappe.db.get_value("Item", {"is_stock_item": 0}, "name") or "Service"
-    
-    so = frappe.get_doc({
-        "doctype": "Sales Order",
-        "customer": customer,
-        "delivery_date": frappe.utils.add_days(frappe.utils.nowdate(), 2),
-        "custom_is_maintenance_order": 1,
-        "custom_maintenance_status": "Assigned",
-        "custom_assigned_technician": tech,
-        "priority": "High",
-        "items": [{
-            "item_code": item_code,
-            "qty": 1,
-            "rate": 200,
-            "delivery_date": frappe.utils.add_days(frappe.utils.nowdate(), 2)
-        }]
-    })
-    so.insert(ignore_permissions=True)
-    so.submit()
-    
-    sa = frappe.db.get_value("Service Appointment", {"sales_order": so.name}, "name")
-    accept_res = accept_dispatch(sa)
-    so.reload()
-    accept_status = so.custom_maintenance_status
-    
-    reject_res = reject_dispatch(sa, reason="Schedule Conflict")
-    so.reload()
-    reject_status = so.custom_maintenance_status
-    assigned_tech = so.get("custom_assigned_technician")
-    
-    return {
-        "sales_order": so.name,
-        "service_appointment": sa,
-        "accept_result": accept_res,
-        "accept_so_status": accept_status,
-        "reject_result": reject_res,
-        "reject_so_status": reject_status,
-        "unassigned_tech": assigned_tech
-    }
+        return f"<h3>Error</h3><p>{str(e)}</p>"
