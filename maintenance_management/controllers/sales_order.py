@@ -297,25 +297,23 @@ def send_technician_notification(doc, appointment_name, technician_override=None
     formatted_msg = msg_tpl.format(sales_order=doc.name, customer=doc.customer_name or doc.customer, time=doc.get('custom_scheduled_date_time') or 'Immediate')
     
     msg = f"""
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 14px; background: #ffffff; border-left: 4px solid #3498db; line-height: 1.5; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-        <div style="font-weight: bold; font-size: 16px; color: #2c3e50; margin-bottom: 6px;">{formatted_title}</div>
-        <div style="font-size: 13px; color: #555555; margin-bottom: 12px; white-space: pre-line;">
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 10px; background: #fff; border-left: 3px solid #1a73e8; border-radius: 4px; max-width: 320px;">
+        <div style="font-weight: 600; font-size: 14px; color: #1f2937; margin-bottom: 4px;">{formatted_title}</div>
+        <div style="font-size: 12px; color: #4b5563; margin-bottom: 10px; line-height: 1.4;">
             {formatted_msg}
-            <br><b>Technician Assigned:</b> {tech}
-            <br><b>Appointment ID:</b> {appointment_name}
         </div>
-        <div style="margin-top: 10px; display: flex; gap: 8px;">
+        <div style="display: flex; gap: 6px;">
             <a href="{get_url()}/api/method/maintenance_management.controllers.sales_order.accept_dispatch?appointment_name={appointment_name}" 
-               style="background: #2ecc71; color: white; padding: 6px 14px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block;">
-               ✅ Accept
+               style="background: #10b981; color: #fff; padding: 4px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: 500;">
+               Accept
             </a>
             <a href="{get_url()}/api/method/maintenance_management.controllers.sales_order.reject_dispatch?appointment_name={appointment_name}" 
-               style="background: #e74c3c; color: white; padding: 6px 14px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block;">
-               ❌ Reject
+               style="background: #ef4444; color: #fff; padding: 4px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: 500;">
+               Reject
             </a>
             <a href="{get_url()}/app/service-appointment/{appointment_name}" 
-               style="background: #3498db; color: white; padding: 6px 14px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block;">
-               🔍 Details
+               style="background: #3b82f6; color: #fff; padding: 4px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: 500;">
+               Details
             </a>
         </div>
     </div>

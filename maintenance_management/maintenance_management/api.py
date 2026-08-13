@@ -1656,3 +1656,22 @@ def get_sales_order_dashboard(data=None):
         })
         
     return data
+
+@frappe.whitelist()
+def test_technician_notification(user=None):
+    if not user:
+        user = frappe.session.user
+    
+    # Mock data for testing
+    doc = frappe._dict({
+        "name": "TEST-ORD-001",
+        "customer": "Test Customer",
+        "customer_name": "Test Customer",
+        "custom_scheduled_date_time": frappe.utils.now()
+    })
+    
+    from maintenance_management.controllers.sales_order import send_technician_notification
+    # We pass a dummy appointment name
+    send_technician_notification(doc, "TEST-APP-001", technician_override=None)
+    
+    return True

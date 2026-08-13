@@ -47,6 +47,11 @@
    "label": "Enable Mobile & Browser Push Notifications"
   },
   {
+   "fieldname": "test_notification",
+   "fieldtype": "Button",
+   "label": "Test Notification & Sound"
+  },
+  {
    "fieldname": "features_section",
    "fieldtype": "Section Break",
    "label": "Optional Features & Toggles (Phase 1 / Phase 2)"
