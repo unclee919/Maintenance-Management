@@ -1,12 +1,76 @@
 [
  {
   "doctype": "Custom Field",
+  "name": "Sales Order-maintenance_section_break",
+  "dt": "Sales Order",
+  "fieldname": "maintenance_section_break",
+  "fieldtype": "Section Break",
+  "insert_after": "customer",
+  "label": "Field Maintenance Management",
+  "collapsible": 1,
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-custom_is_maintenance_order",
+  "dt": "Sales Order",
+  "fieldname": "custom_is_maintenance_order",
+  "fieldtype": "Check",
+  "insert_after": "maintenance_section_break",
+  "label": "Is Maintenance Order",
+  "default": 1,
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-custom_maintenance_status",
+  "dt": "Sales Order",
+  "fieldname": "custom_maintenance_status",
+  "fieldtype": "Select",
+  "insert_after": "custom_is_maintenance_order",
+  "label": "Maintenance Status",
+  "options": "New\nPending Confirmation\nScheduled\nDispatched\nAccepted\nArrived\nIn Progress\nCompleted\nCancelled",
+  "default": "New",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-custom_problem_description",
+  "dt": "Sales Order",
+  "fieldname": "custom_problem_description",
+  "fieldtype": "Small Text",
+  "insert_after": "custom_maintenance_status",
+  "label": "Problem Description",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-equipment_type",
+  "dt": "Sales Order",
+  "fieldname": "equipment_type",
+  "fieldtype": "Data",
+  "insert_after": "custom_problem_description",
+  "label": "Equipment Type",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
   "name": "Sales Order-equipment_serial_no",
   "dt": "Sales Order",
   "fieldname": "equipment_serial_no",
   "fieldtype": "Data",
   "insert_after": "equipment_type",
   "label": "Equipment Serial No",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-scheduled_date_time",
+  "dt": "Sales Order",
+  "fieldname": "scheduled_date_time",
+  "fieldtype": "Datetime",
+  "insert_after": "equipment_serial_no",
+  "label": "Scheduled Date & Time",
   "module": "Maintenance Management"
  },
  {
@@ -48,7 +112,7 @@
   "fieldname": "assigned_technicians",
   "fieldtype": "Small Text",
   "insert_after": "service_photo",
-  "label": "Assigned Technicians (Comma Separated)",
+  "label": "Assigned Technicians",
   "module": "Maintenance Management"
  },
  {
@@ -70,29 +134,6 @@
   "options": "Sales Order",
   "insert_after": "is_warranty_claim",
   "label": "Original Order Reference",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Field Maintenance Settings-assignment_criteria",
-  "dt": "Field Maintenance Settings",
-  "fieldname": "assignment_criteria",
-  "fieldtype": "Select",
-  "insert_after": "auto_assign_technician",
-  "label": "Assignment Criteria",
-  "options": "Skill Based\nWorkload Balance\nTerritory Based\nRound Robin",
-  "default": "Skill Based",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Field Maintenance Settings-enable_health_check",
-  "dt": "Field Maintenance Settings",
-  "fieldname": "enable_health_check",
-  "fieldtype": "Check",
-  "insert_after": "assignment_criteria",
-  "label": "Enable Automated Health Check & Monitoring",
-  "default": 1,
   "module": "Maintenance Management"
  }
 ]
