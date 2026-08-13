@@ -38,7 +38,7 @@
 	   "fieldname": "notification_sound",
 	   "fieldtype": "Select",
 	   "label": "Notification Sound Effect",
-	   "options": "Default\\nChime\\nBeep\\nAlert\\nCustom"
+	   "options": "Default\nChime\nBeep\nAlert\nCustom"
 	  },
 	  {
 	   "fieldname": "notification_sound_file",
