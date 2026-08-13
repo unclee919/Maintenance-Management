@@ -1329,19 +1329,32 @@ def check_doctypes():
 
 @frappe.whitelist()
 def clean_modules():
-    # Merge or delete duplicate module defs
     target = "Maintenance Management"
     duplicates = ["maintenance_management", "Fieldfix", "Field Service Management"]
-    
     for d in duplicates:
         if frappe.db.exists("Module Def", d):
-            # Reassign any doctypes or reports using this module
             frappe.db.sql("UPDATE `tabDocType` SET module = %s WHERE module = %s", (target, d))
             frappe.db.sql("UPDATE `tabWorkspace` SET module = %s WHERE module = %s", (target, d))
             frappe.db.sql("UPDATE `tabNumber Card` SET module = %s WHERE module = %s", (target, d))
             frappe.db.sql("UPDATE `tabDashboard Chart` SET module = %s WHERE module = %s", (target, d))
             frappe.delete_doc("Module Def", d, force=1)
             print(f"Deleted duplicate module def: {d}")
-            
     frappe.db.commit()
     return "Modules cleaned successfully."
+
+@frappe.whitelist()
+def clean_redundant_doctypes():
+    redundant = [
+        "Ticket", "Fieldfix Dispatch Log", "Customer Appliance", "Customer Contact", 
+        "Visit Part Usage", "Ticket Media", "Technician Location Log", "fieldfix Control Panel", 
+        "Request Type", "Appliance Type", "City", "Governorate", "Field Service Request", "Visit"
+    ]
+    for dt in redundant:
+        if frappe.db.exists("DocType", dt):
+            try:
+                frappe.delete_doc("DocType", dt, force=1, ignore_permissions=True)
+                print(f"Deleted redundant DocType: {dt}")
+            except Exception as e:
+                print(f"Error deleting {dt}: {e}")
+    frappe.db.commit()
+    return "Redundant DocTypes cleaned successfully."
