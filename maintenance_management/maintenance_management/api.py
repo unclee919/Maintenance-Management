@@ -1482,8 +1482,8 @@ def fix_single_settings():
     all_singles = frappe.db.sql("SELECT * FROM `tabSingles`", as_dict=True)
     print("All singles count:", len(all_singles))
     
-    singles = frappe.db.sql("SELECT field, value FROM `tabSingles` WHERE doctype='Field Maintenance Settings'", as_dict=True)
-    print("Singles for Field Maintenance Settings:", singles)
+    vals = frappe.db.get_values("Field Maintenance Settings", None, ["field", "value"])
+    print("get_values result:", vals)
     data = {}
     if singles:
         for s in singles:
