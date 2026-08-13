@@ -26,5 +26,31 @@ frappe.ui.form.on('Field Maintenance Settings', {
                 }
             }
         });
+    },
+    check_connectivity: function(frm) {
+        frappe.show_alert({message: __("Checking connectivity..."), indicator: 'orange'});
+        fetch(window.location.origin + "/api/method/frappe.ping")
+            .then(response => {
+                if (response.ok) {
+                    frappe.msgprint({
+                        title: __("Connectivity OK"),
+                        message: __("Your browser can successfully reach the server at {0}.", [window.location.origin]),
+                        indicator: 'green'
+                    });
+                } else {
+                    frappe.msgprint({
+                        title: __("Server Error"),
+                        message: __("Server reached but returned an error: {0}", [response.status]),
+                        indicator: 'red'
+                    });
+                }
+            })
+            .catch(error => {
+                frappe.msgprint({
+                    title: __("Connection Failed"),
+                    message: __("DNS or Network Error: Could not reach the server. Please check your internet or DNS settings."),
+                    indicator: 'red'
+                });
+            });
     }
 });

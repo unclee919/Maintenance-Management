@@ -52,11 +52,16 @@
    "fieldtype": "Check",
    "label": "Enable Mobile & Browser Push Notifications"
   },
-  {
-   "fieldname": "test_notification",
-   "fieldtype": "Button",
-   "label": "Test Notification & Sound"
-  },
+	  {
+	   "fieldname": "test_notification",
+	   "fieldtype": "Button",
+	   "label": "Test Notification & Sound"
+	  },
+	  {
+	   "fieldname": "check_connectivity",
+	   "fieldtype": "Button",
+	   "label": "Check Server Connectivity"
+	  },
   {
    "fieldname": "features_section",
    "fieldtype": "Section Break",
