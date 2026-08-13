@@ -309,9 +309,6 @@ def send_technician_notification(doc, appointment_name, technician_override=None
     if not target_user and user_email:
         target_user = frappe.db.get_value("User", {"email": user_email}, "name")
     
-    # DEBUG
-    print(f"DEBUG: tech={tech}, target_user={target_user}, user_email={user_email}")
-    
     msg = f"""
     <div style="font-family: Arial, sans-serif; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
         <h2 style="color: #2c3e50; margin-top: 0;">🛠️ New Maintenance Dispatch Assigned</h2>
@@ -337,8 +334,8 @@ def send_technician_notification(doc, appointment_name, technician_override=None
                 subject=f"New Dispatch Assigned: {doc.name}",
                 message=msg
             )
-        except Exception as e:
-            print(f"DEBUG: sendmail failed: {str(e)}")
+        except Exception:
+            pass
     
     if target_user:
         try:
@@ -350,9 +347,8 @@ def send_technician_notification(doc, appointment_name, technician_override=None
                 "document_type": "Service Appointment",
                 "document_name": appointment_name
             }).insert(ignore_permissions=True)
-            print(f"DEBUG: Notification Log created for {target_user}")
-        except Exception as e:
-            print(f"DEBUG: Notification Log failed: {str(e)}")
+        except Exception:
+            pass
 
 def after_insert(doc, method=None):
     _ensure_sql_patch()
