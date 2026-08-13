@@ -1318,3 +1318,22 @@ def check_modules():
     mods = frappe.get_all("Module Def", fields=["name", "module_name"])
     print("MODULE DEFS:", mods)
     return mods
+
+@frappe.whitelist()
+def clean_modules():
+    # Merge or delete duplicate module defs
+    target = "Maintenance Management"
+    duplicates = ["maintenance_management", "Fieldfix", "Field Service Management"]
+    
+    for d in duplicates:
+        if frappe.db.exists("Module Def", d):
+            # Reassign any doctypes or reports using this module
+            frappe.db.sql("UPDATE `tabDocType` SET module = %s WHERE module = %s", (target, d))
+            frappe.db.sql("UPDATE `tabWorkspace` SET module = %s WHERE module = %s", (target, d))
+            frappe.db.sql("UPDATE `tabNumber Card` SET module = %s WHERE module = %s", (target, d))
+            frappe.db.sql("UPDATE `tabDashboard Chart` SET module = %s WHERE module = %s", (target, d))
+            frappe.delete_doc("Module Def", d, force=1)
+            print(f"Deleted duplicate module def: {d}")
+            
+    frappe.db.commit()
+    return "Modules cleaned successfully."
