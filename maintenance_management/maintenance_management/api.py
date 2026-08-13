@@ -95,12 +95,14 @@ def after_migrate():
             "app": "maintenance_management",
             "public": 1,
             "type": "Workspace",
-            "icon": "settings",
-            "sequence_id": 2.0
+            "icon": "tools",
+            "sequence_id": 1.0
         })
         w.insert(ignore_permissions=True)
         
     ws = frappe.get_doc("Workspace", "Maintenance Management")
+    ws.icon = "tools"
+    ws.sequence_id = 1.0
     ws.content = json.dumps([
         {"type": "header", "data": {"text": "📊 Maintenance Management Operations & Executive Summary", "col": 12}},
         {"type": "spacer", "data": {"col": 12}},
@@ -143,6 +145,26 @@ def after_migrate():
     # 5. Clean up redundant Field Service Request from Workspace and Sidebar
     frappe.db.sql("DELETE FROM `tabWorkspace Link` WHERE link_to = 'Field Service Request'")
     frappe.db.sql("DELETE FROM `tabWorkspace Shortcut` WHERE link_to = 'Field Service Request'")
+    
+    # 6. Initialize Assignment Criteria in Settings
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+    if not settings.get("weighted_criteria"):
+        default_criteria = [
+            ("Proximity", 25.0),
+            ("Skill Match", 20.0),
+            ("Availability", 15.0),
+            ("Workload Balance", 10.0),
+            ("Performance", 10.0),
+            ("Service Zone", 10.0),
+            ("Route Alignment", 10.0)
+        ]
+        for crit, weight in default_criteria:
+            settings.append("weighted_criteria", {
+                "criterion": crit,
+                "weight": weight,
+                "enabled": 1
+            })
+        settings.save(ignore_permissions=True)
     
     frappe.db.commit()
 

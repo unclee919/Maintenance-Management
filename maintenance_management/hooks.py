@@ -4,6 +4,8 @@ app_publisher = "Enterprise Maintenance Solutions"
 app_description = "Field Maintenance Management System extending ERPNext Sales Order and Sales Invoice"
 app_email = "support@elmrkz.cloud"
 app_license = "mit"
+app_icon = "octicon octicon-tools"
+app_color = "grey"
 
 doc_events = {
     "Sales Order": {
