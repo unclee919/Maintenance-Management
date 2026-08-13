@@ -2,6 +2,19 @@
     $(document).ready(function() {
     console.log("Maintenance Management: Global script loaded.");
 
+    // Inject required keyframe animation for popup banner
+    if (!document.getElementById('maint-anim-style')) {
+        var styleEl = document.createElement('style');
+        styleEl.id = 'maint-anim-style';
+        styleEl.innerHTML = `
+            @keyframes slideInUp {
+                from { transform: translateY(100px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(styleEl);
+    }
+
     // Add a floating Test Notification button to bottom left for easy verification
     if (!document.getElementById('maint-test-btn')) {
         var testBtn = document.createElement('div');
