@@ -50,6 +50,9 @@ def after_migrate():
     
     for c in cards:
         if not frappe.db.exists("Number Card", c["name"]):
+            if not frappe.db.exists("Module Def", "Maintenance Management"):
+                m = frappe.get_doc({"doctype": "Module Def", "module_name": "Maintenance Management"})
+                m.insert(ignore_permissions=True)
             doc = frappe.get_doc({
                 "doctype": "Number Card",
                 "name": c["name"],
