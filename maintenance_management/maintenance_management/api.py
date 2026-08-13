@@ -1473,23 +1473,20 @@ def fix_settings_name():
     return "Settings name fixed successfully"
 
 @frappe.whitelist()
-def fix_single_settings():
-    print("=== FIXING SINGLE SETTINGS ===")
-    frappe.db.sql("UPDATE `tabDocType` SET issingle=1 WHERE name='Field Maintenance Settings'")
+def fix_multi_settings():
+    print("=== FIXING MULTI-RECORD SETTINGS MODEL ===")
+    # 1. Set issingle = 0 in tabDocType so it acts as a normal table doc
+    frappe.db.sql("UPDATE `tabDocType` SET issingle=0 WHERE name='Field Maintenance Settings'")
     frappe.db.commit()
     
-    # Let's check what tabSingles has
-    all_singles = frappe.db.sql("SELECT * FROM `tabSingles`", as_dict=True)
-    print("All singles count:", len(all_singles))
-    
-    vals = frappe.db.get_values("Field Maintenance Settings", None, ["field", "value"])
-    print("get_values result:", vals)
-    data = {}
+    # 2. Extract data from tabSingles if any exist
+    singles = frappe.db.sql("SELECT field, value FROM `tabSingles` WHERE doctype='Field Maintenance Settings'", as_dict=True)
+    data = {"name": "Field Maintenance Settings"}
     if singles:
         for s in singles:
             data[s.field] = s.value
     else:
-        data = {
+        data.update({
             "enable_gps_tracking": 1,
             "enable_customer_portal": 1,
             "auto_assign_technician": 1,
@@ -1520,19 +1517,30 @@ def fix_single_settings():
             "price_alert_threshold_pct": 5.0,
             "enable_fallback_supplier": 1,
             "default_warranty_days": 30
-        }
-
+        })
+        
+    # 3. Clear tabSingles
     frappe.db.sql("DELETE FROM `tabSingles` WHERE doctype='Field Maintenance Settings'")
     
-    for k, v in data.items():
-        if k not in ['name', 'creation', 'modified', 'modified_by', 'owner', 'docstatus', 'idx'] and v is not None:
-            frappe.db.sql("""
-                INSERT INTO `tabSingles` (doctype, field, value) 
-                VALUES ('Field Maintenance Settings', %s, %s)
-            """, (k, str(v)))
-            
+    # 4. Upsert into tabField Maintenance Settings with name='Field Maintenance Settings'
+    exists = frappe.db.exists("Field Maintenance Settings", "Field Maintenance Settings")
+    if not exists:
+        doc = frappe.get_doc({
+            "doctype": "Field Maintenance Settings",
+            "name": "Field Maintenance Settings",
+            **data
+        })
+        doc.insert(ignore_permissions=True)
+    else:
+        frappe.db.sql("""
+            UPDATE `tabField Maintenance Settings` 
+            SET enable_gps_tracking=1, enable_customer_portal=1, auto_assign_technician=1 
+            WHERE name='Field Maintenance Settings'
+        """)
+    
     frappe.db.commit()
     
-    doc = frappe.get_single("Field Maintenance Settings")
-    print("Successfully loaded Single Doc:", doc.name)
-    return {"status": "success", "message": "Single settings fixed successfully"}
+    # Test loading
+    doc = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+    print("Successfully loaded Multi-record Settings Doc:", doc.name)
+    return {"status": "success", "message": "Settings model converted to multi-record successfully"}
