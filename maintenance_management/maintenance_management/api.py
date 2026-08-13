@@ -207,7 +207,13 @@ def after_migrate():
     frappe.db.sql("DELETE FROM `tabWorkspace Shortcut` WHERE link_to = 'Field Service Request'")
     
     # 7. Initialize Assignment Criteria in Settings
-    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+    if not frappe.db.exists("Field Maintenance Settings", "Field Maintenance Settings"):
+        settings = frappe.new_doc("Field Maintenance Settings")
+        settings.name = "Field Maintenance Settings"
+        settings.insert(ignore_permissions=True)
+    else:
+        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+
     if not settings.get("weighted_criteria"):
         default_criteria = [
             ("Proximity", 25.0),
