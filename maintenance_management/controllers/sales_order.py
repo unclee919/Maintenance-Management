@@ -124,7 +124,7 @@ def assign_technician_weighted(doc):
     
     doc.db_set("assigned_technicians", best_tech)
     doc.db_set("custom_assigned_technician", best_tech)
-    doc.db_set("custom_maintenance_status", "Assigned")
+    doc.db_set("custom_maintenance_status", "Scheduled")
     
     return best_tech
 
@@ -160,9 +160,9 @@ def assign_technician_weighted_for_item(doc, item):
     best_tech = scored_techs[0]["tech"]
     
     item.custom_technician = best_tech
-    item.custom_status = "Assigned"
+    item.custom_status = "Scheduled"
     item.db_set("custom_technician", best_tech)
-    item.db_set("custom_status", "Assigned")
+    item.db_set("custom_status", "Scheduled")
     
     return best_tech
 
