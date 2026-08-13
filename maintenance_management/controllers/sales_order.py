@@ -492,3 +492,47 @@ def test_service_appointment_creation():
     so.submit()
     sa = frappe.get_all("Service Appointment", filters={"sales_order": so.name}, fields=["name", "status", "technician"])
     return {"sales_order": so.name, "service_appointment": sa}
+
+@frappe.whitelist()
+def test_workflow_execution():
+    tech = frappe.db.get_value("Field Technician", {}, "name")
+    customer = frappe.db.get_value("Customer", {}, "name")
+    item_code = frappe.db.get_value("Item", {"is_stock_item": 0}, "name") or "Service"
+    
+    so = frappe.get_doc({
+        "doctype": "Sales Order",
+        "customer": customer,
+        "delivery_date": frappe.utils.add_days(frappe.utils.nowdate(), 2),
+        "custom_is_maintenance_order": 1,
+        "custom_maintenance_status": "Assigned",
+        "custom_assigned_technician": tech,
+        "priority": "High",
+        "items": [{
+            "item_code": item_code,
+            "qty": 1,
+            "rate": 200,
+            "delivery_date": frappe.utils.add_days(frappe.utils.nowdate(), 2)
+        }]
+    })
+    so.insert(ignore_permissions=True)
+    so.submit()
+    
+    sa = frappe.db.get_value("Service Appointment", {"sales_order": so.name}, "name")
+    accept_res = accept_dispatch(sa)
+    so.reload()
+    accept_status = so.custom_maintenance_status
+    
+    reject_res = reject_dispatch(sa, reason="Schedule Conflict")
+    so.reload()
+    reject_status = so.custom_maintenance_status
+    assigned_tech = so.get("custom_assigned_technician")
+    
+    return {
+        "sales_order": so.name,
+        "service_appointment": sa,
+        "accept_result": accept_res,
+        "accept_so_status": accept_status,
+        "reject_result": reject_res,
+        "reject_so_status": reject_status,
+        "unassigned_tech": assigned_tech
+    }
