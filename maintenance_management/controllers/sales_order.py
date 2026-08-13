@@ -378,6 +378,7 @@ def send_technician_notification(doc, appointment_name, technician_override=None
                 notification_payload,
                 after_commit=True
             )
+            frappe.msgprint(_("Maintenance Dispatch Created & Realtime Broadcast Sent for {0} -> Technician: {1}").format(doc.name, tech), alert=True)
             
             # Mobile Push Notification (Standard Frappe)
             if settings.enable_mobile_push:

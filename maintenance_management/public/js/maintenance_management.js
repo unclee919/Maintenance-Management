@@ -1,6 +1,25 @@
 // Maintenance Management Global JS & Push Notification Handler
-$(document).ready(function() {
+    $(document).ready(function() {
     console.log("Maintenance Management: Global script loaded.");
+
+    // Add a floating Test Notification button to bottom left for easy verification
+    if (!document.getElementById('maint-test-btn')) {
+        var testBtn = document.createElement('div');
+        testBtn.id = 'maint-test-btn';
+        testBtn.innerHTML = '🔔 Test Alert';
+        testBtn.style.cssText = 'position: fixed; bottom: 20px; left: 20px; z-index: 99998; background: #1a73e8; color: #fff; padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2);';
+        testBtn.onclick = function() {
+            frappe.realtime.trigger("maintenance_notification", {
+                title: "🔔 Test Maintenance Dispatch",
+                message: "Customer: Test Client\nTime: Immediate\nStatus: Simulated Live Alert",
+                docname: "TEST-APPT-001",
+                sound: "Chime",
+                push: true
+            });
+            frappe.show_alert({message: "Triggered Test Notification!", indicator: "green"}, 5);
+        };
+        document.body.appendChild(testBtn);
+    }
 
     // Request browser notification permission
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
