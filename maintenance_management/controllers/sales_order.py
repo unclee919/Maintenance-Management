@@ -1,43 +1,24 @@
 import frappe
 from frappe import _
-from frappe.utils import flt, now, now_datetime, get_datetime, time_diff_in_hours
+from frappe.utils import flt, now, now_datetime, time_diff_in_hours, get_url
 import math
 
 def _ensure_sql_patch():
+    """Ensures necessary SQL indexes exist for performance"""
     try:
-        if not getattr(frappe.db, "_is_patched", False):
-            _orig_sql = frappe.db.sql
-            def _patched_sql(query, *args, **kwargs):
-                query_str = str(query)
-                if "is_billing_contact" in query_str:
-                    return ()
-                return _orig_sql(query, *args, **kwargs)
-            frappe.db.sql = _patched_sql
-            frappe.db._is_patched = True
+        frappe.db.sql("""
+            ALTER TABLE `tabSales Order Item` 
+            ADD INDEX IF NOT EXISTS `idx_custom_tech_status` (custom_technician, custom_status)
+        """)
     except Exception:
         pass
 
-@frappe.whitelist()
-def run_ai_diagnostics(doc, method=None):
-    _ensure_sql_patch()
-    if isinstance(doc, str):
-        doc = frappe.get_doc("Sales Order", doc)
-    
-    equipment = doc.get("equipment_type") or "General Equipment"
-    issue = doc.get("custom_problem_description") or doc.get("issue_description") or "Standard Maintenance"
-    
-    diagnostic_text = f"AI Diagnostics Analysis for [{equipment}]: Based on reported issue ('{issue}'), recommended root cause is component wear or fluid degradation. Recommended replacement parts: Refrigerant R410A (Qty: 2), Filter Drier (Qty: 1). Estimated repair cost: $250.0."
-    
-    doc.db_set("custom_problem_description", f"{issue}\n\n[AI Diagnostics]: {diagnostic_text}")
-    return diagnostic_text
-
 def calc_distance(lat1, lon1, lat2, lon2):
-    """Haversine formula to calculate distance in KM"""
     R = 6371.0
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
     a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
-    c = 2 * math.asin(math.sqrt(a))
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
 def _calculate_tech_score(tech, weights, cust_lat, cust_lon, equipment, cust_zone):
@@ -167,17 +148,15 @@ def assign_technician_weighted_for_item(doc, item):
     return best_tech
 
 def auto_assign_tech_for_item(doc, item):
-    _ensure_sql_patch()
-    if item.get("custom_technician"):
-        return
-    
+    """Fallback auto-assignment logic for items"""
     try:
-        settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
-        if not settings.get("auto_assign_technician"):
-            return
-        
-        assign_technician_weighted_for_item(doc, item)
-    except Exception as e:
+        best_tech = assign_technician_weighted_for_item(doc, item)
+        if best_tech:
+            item.custom_technician = best_tech
+            item.custom_status = "Scheduled"
+            item.db_set("custom_technician", best_tech)
+            item.db_set("custom_status", "Scheduled")
+    except Exception:
         frappe.log_error(frappe.get_traceback(), "Auto Assign Tech Item Error")
 
 def check_sla_escalations():
@@ -310,28 +289,33 @@ def send_technician_notification(doc, appointment_name, technician_override=None
         target_user = frappe.db.get_value("User", {"email": user_email}, "name")
     
     msg = f"""
-    <div style="font-family: Arial, sans-serif; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
-        <h2 style="color: #2c3e50; margin-top: 0;">🛠️ New Maintenance Dispatch Assigned</h2>
-        <table style="width: 100%; margin-bottom: 15px;">
-            <tr><td><b>Sales Order:</b></td><td>{doc.name}</td></tr>
-            <tr><td><b>Customer:</b></td><td>{doc.customer}</td></tr>
-            <tr><td><b>Priority:</b></td><td>{doc.get('priority') or 'Medium'}</td></tr>
-            <tr><td><b>Scheduled Date/Time:</b></td><td>{doc.get('custom_scheduled_date_time') or 'As Soon As Possible'}</td></tr>
-            <tr><td><b>Service Appointment:</b></td><td>{appointment_name}</td></tr>
-        </table>
-        <p>Please review the details and click below to accept or reject this assignment:</p>
-        <p style="margin-top: 20px;">
-            <a href="/api/method/maintenance_management.controllers.sales_order.accept_dispatch?appointment_name={appointment_name}" style="background: #2ecc71; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-right: 10px;">✅ Accept Dispatch</a>
-            <a href="/api/method/maintenance_management.controllers.sales_order.reject_dispatch?appointment_name={appointment_name}" style="background: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-right: 10px;">❌ Reject Dispatch</a>
-            <a href="/app/service-appointment/{appointment_name}" style="background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">🔍 View in Portal</a>
-        </p>
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 12px; background: #ffffff; border-left: 4px solid #3498db; line-height: 1.4;">
+        <div style="font-weight: bold; font-size: 15px; color: #2c3e50; margin-bottom: 5px;">🛠️ New Dispatch: {doc.name}</div>
+        <div style="font-size: 13px; color: #7f8c8d; margin-bottom: 10px;">
+            <b>Customer:</b> {doc.customer_name or doc.customer}<br>
+            <b>Time:</b> {doc.get('custom_scheduled_date_time') or 'Immediate'}
+        </div>
+        <div style="margin-top: 8px;">
+            <a href="{get_url()}/api/method/maintenance_management.controllers.sales_order.accept_dispatch?appointment_name={appointment_name}" 
+               style="background: #2ecc71; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; margin-right: 5px;">
+               Accept
+            </a>
+            <a href="{get_url()}/api/method/maintenance_management.controllers.sales_order.reject_dispatch?appointment_name={appointment_name}" 
+               style="background: #e74c3c; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; margin-right: 5px;">
+               Reject
+            </a>
+            <a href="{get_url()}/app/service-appointment/{appointment_name}" 
+               style="background: #3498db; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block;">
+               Details
+            </a>
+        </div>
     </div>
     """
     if user_email:
         try:
             frappe.sendmail(
                 recipients=[user_email],
-                subject=f"New Dispatch Assigned: {doc.name}",
+                subject=f"Dispatch: {doc.name}",
                 message=msg
             )
         except Exception:
@@ -341,12 +325,23 @@ def send_technician_notification(doc, appointment_name, technician_override=None
         try:
             frappe.get_doc({
                 "doctype": "Notification Log",
-                "subject": f"New Maintenance Dispatch: {doc.name}",
+                "subject": f"New Dispatch: {doc.name}",
                 "email_content": msg,
                 "for_user": target_user,
                 "document_type": "Service Appointment",
                 "document_name": appointment_name
             }).insert(ignore_permissions=True)
+            
+            # Real-time notification
+            frappe.publish_realtime(
+                "maintenance_notification",
+                {
+                    "title": "🛠️ New Dispatch Assigned",
+                    "message": f"Order {doc.name} for {doc.customer_name or doc.customer}",
+                    "docname": appointment_name
+                },
+                user=target_user
+            )
         except Exception:
             pass
 

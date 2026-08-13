@@ -776,7 +776,7 @@ def check_geofence_arrival(sales_order, tech_lat, tech_lon):
     if arrived:
         alert_msg = f"🚨 GEOFENCE ARRIVAL ALERT: Technician arrived at customer location for Sales Order {sales_order} (Distance: {round(distance)}m)."
         frappe.logger().info(alert_msg)
-        if order.get("custom_maintenance_status") in ["On the Way", "Assigned"]:
+        if order.get("custom_maintenance_status") in ["On the Way", "Scheduled"]:
             order.custom_maintenance_status = "Arrived"
             order.save(ignore_permissions=True)
             frappe.db.commit()
@@ -1100,7 +1100,7 @@ def optimize_technician_routes(technician_id):
     """Uses distance and travel-time heuristics to sequence multiple daily orders for a technician, minimizing fuel and transit time."""
     orders = frappe.get_all("Sales Order", filters={
         "custom_assigned_technician": technician_id,
-        "custom_maintenance_status": ["in", ["Assigned", "On the Way"]]
+        "custom_maintenance_status": ["in", ["Scheduled", "On the Way"]]
     }, fields=["name", "customer", "customer_name", "delivery_date"])
     
     # Simulate optimized route sequencing (TSP heuristic)
@@ -1309,7 +1309,7 @@ def iot_sensor_fault_webhook_with_nearest_dispatch(sensor_id, equipment_id, faul
     so = frappe.new_doc("Sales Order")
     so.customer = "IoT Auto-Client"
     so.custom_is_maintenance_order = 1
-    so.custom_maintenance_status = "Assigned"
+    so.custom_maintenance_status = "Scheduled"
     so.custom_assigned_technician = assigned_tech or "TECH-001"
     so.custom_equipment_fault_description = f"IoT EMERGENCY FAULT: Sensor {sensor_id}, Code {fault_code} (Val: {reading_value}). Nearest Tech {assigned_tech} dispatched ({round(min_distance, 2)} km away)."
     so.delivery_date = frappe.utils.nowdate()
