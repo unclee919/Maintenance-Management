@@ -11,9 +11,14 @@ def test_settings():
 def get_sales_order_dashboard(data=None):
     if data is None:
         data = {}
-    if isinstance(data, dict) and 'transactions' in data:
-        data['transactions'].append({
-            'label': _('Maintenance'),
-            'items': ['Service Appointment', 'Stock Entry', 'Sales Invoice']
-        })
+    if isinstance(data, dict):
+        if 'transactions' not in data:
+            data['transactions'] = []
+        # Check if Maintenance section already exists to avoid duplication
+        exists = any(t.get('label') == _('Maintenance') for t in data['transactions'])
+        if not exists:
+            data['transactions'].append({
+                'label': _('Maintenance'),
+                'items': ['Service Appointment', 'Stock Entry', 'Sales Invoice']
+            })
     return data
