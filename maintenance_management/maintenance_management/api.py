@@ -1347,7 +1347,8 @@ def clean_redundant_doctypes():
     redundant = [
         "Ticket", "Fieldfix Dispatch Log", "Customer Appliance", "Customer Contact", 
         "Visit Part Usage", "Ticket Media", "Technician Location Log", "fieldfix Control Panel", 
-        "Request Type", "Appliance Type", "City", "Governorate", "Field Service Request", "Visit"
+        "Request Type", "Appliance Type", "City", "Governorate", "Field Service Request", "Visit",
+        "Technician"
     ]
     for dt in redundant:
         if frappe.db.exists("DocType", dt):
