@@ -8,14 +8,14 @@ def track_request(request_id):
         return {"status": "error", "message": "Request ID is required"}
     
     doc = frappe.db.get_value(
-        "Field Service Request",
+        "Sales Order",
         request_id,
-        ["name", "customer_name", "equipment_type", "status", "technician", "scheduled_date", "total_amount", "warranty_status"],
+        ["name", "customer_name", "status", "grand_total", "delivery_date"],
         as_dict=True
     )
     
     if not doc:
-        return {"status": "error", "message": "Service Request not found"}
+        return {"status": "error", "message": "Sales Order not found"}
         
     return {"status": "success", "data": doc}
 
@@ -117,7 +117,7 @@ def after_migrate():
         {"type": "spacer", "data": {"col": 12}},
         {"type": "header", "data": {"text": "⚡ Core Modules & Quick Links", "col": 12}},
         {"type": "shortcut", "data": {"shortcut_name": "Field Technician", "col": 4}},
-        {"type": "shortcut", "data": {"shortcut_name": "Field Service Request", "col": 4}},
+        {"type": "shortcut", "data": {"shortcut_name": "Service Appointment", "col": 4}},
         {"type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 4}},
     ])
     ws.save(ignore_permissions=True)
