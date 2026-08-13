@@ -1410,3 +1410,27 @@ def execute_fix():
     frappe.db.commit()
     print('--- Fix Completed Successfully ---')
     return "Fix completed successfully"
+
+@frappe.whitelist()
+def fix_settings():
+    print("--- Fixing Field Maintenance Settings ---")
+    meta = frappe.get_meta("Field Maintenance Settings")
+    print("Is single:", meta.issingle)
+    
+    if not meta.issingle:
+        recs = frappe.db.sql("SELECT name FROM `tabField Maintenance Settings`", as_dict=True)
+        print("Existing records:", recs)
+        if not frappe.db.exists("Field Maintenance Settings", "Field Maintenance Settings"):
+            if recs:
+                old_name = recs[0]['name']
+                frappe.rename_doc("Field Maintenance Settings", old_name, "Field Maintenance Settings", force=True)
+                print(f"Renamed {old_name} to Field Maintenance Settings")
+            else:
+                doc = frappe.get_doc({"doctype": "Field Maintenance Settings", "name": "Field Maintenance Settings"})
+                doc.insert(ignore_permissions=True)
+                print("Created Field Maintenance Settings record")
+    else:
+        print("Is single DocType")
+        
+    frappe.db.commit()
+    return "Settings fixed successfully"
