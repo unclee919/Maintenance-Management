@@ -181,7 +181,7 @@ def after_migrate():
     t_ws.shortcuts = []
     t_ws.number_cards = []
     for card_name in ["My Open Orders", "My Completed Today", "My Efficiency Score"]:
-        t_ws.append("number_cards", {"number_card": card_name, "label": card_name})
+        t_ws.append("number_cards", {"number_card_name": card_name, "label": card_name})
     t_ws.append("shortcuts", {"shortcut_name": "Service Appointment", "link_to": "Service Appointment", "type": "DocType", "label": "My Appointments"})
     t_ws.append("shortcuts", {"shortcut_name": "Sales Order", "link_to": "Sales Order", "type": "DocType", "label": "My Sales Orders"})
     t_ws.append("shortcuts", {"shortcut_name": "Stock Entry", "link_to": "Stock Entry", "type": "DocType", "label": "My Van Stock"})
