@@ -318,6 +318,10 @@ def create_service_appointment(doc):
                 "notes": f"Service Appointment for item {item.item_code} on Sales Order {doc.name}"
             })
             sa.insert(ignore_permissions=True)
+            try:
+                sa.submit()
+            except Exception as e:
+                frappe.log_error(title=f"Service Appointment Submit Error for {sa.name}", message=str(e))
             if tech:
                 send_technician_notification(doc, sa.name, technician_override=tech)
 
