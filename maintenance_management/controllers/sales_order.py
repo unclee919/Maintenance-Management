@@ -349,8 +349,27 @@ def send_technician_notification(doc, appointment_name, technician_override=None
                     "sound": sound_effect,
                     "push": True
                 },
-                user=target_user
+                user=target_user,
+                after_commit=True
             )
+            
+            # Mobile Push Notification (Standard Frappe)
+            if settings.enable_mobile_push:
+                try:
+                    from frappe.utils.response import json_handler
+                    frappe.publish_realtime(
+                        "notification",
+                        {
+                            "title": formatted_title,
+                            "body": formatted_msg,
+                            "document_type": "Service Appointment",
+                            "document_name": appointment_name
+                        },
+                        user=target_user,
+                        after_commit=True
+                    )
+                except Exception:
+                    pass
         except Exception:
             pass
 

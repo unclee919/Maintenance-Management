@@ -56,7 +56,9 @@ $(document).ready(function() {
 
     // Listen for real-time maintenance notifications
     if (typeof frappe !== "undefined" && frappe.realtime) {
+        console.log("Maintenance Management: Real-time listener initialized.");
         frappe.realtime.on("maintenance_notification", function(data) {
+            console.log("Maintenance Notification Received:", data);
             // 1. Show Browser Native Push Notification
             if (typeof Notification !== "undefined" && Notification.permission === "granted") {
                 try {

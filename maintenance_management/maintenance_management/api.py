@@ -1674,4 +1674,5 @@ def test_technician_notification(user=None):
     # We pass a dummy appointment name
     send_technician_notification(doc, "TEST-APP-001", technician_override=None)
     
-    return True
+    frappe.db.commit()
+    return {"status": "success", "message": "Notification triggered for " + user}
