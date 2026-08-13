@@ -1473,19 +1473,21 @@ def fix_settings_name():
     return "Settings name fixed successfully"
 
 @frappe.whitelist()
-def test_single_doc():
-    frappe.db.sql("UPDATE `tabDocType` SET issingle=1 WHERE name='Field Maintenance Settings'")
+def test_multi_doc():
+    frappe.db.sql("UPDATE `tabDocType` SET issingle=0 WHERE name='Field Maintenance Settings'")
     frappe.db.commit()
     
-    frappe.db.sql("DELETE FROM `tabSingles` WHERE doctype='Field Maintenance Settings'")
-    frappe.db.sql("INSERT INTO `tabSingles` (doctype, field, value) VALUES ('Field Maintenance Settings', 'enable_gps_tracking', '1')")
-    frappe.db.sql("INSERT INTO `tabSingles` (doctype, field, value) VALUES ('Field Maintenance Settings', 'enable_customer_portal', '1')")
+    frappe.db.sql("DELETE FROM `tabField Maintenance Settings` WHERE name='Field Maintenance Settings'")
+    frappe.db.sql("""
+        INSERT INTO `tabField Maintenance Settings` (name, creation, modified, modified_by, owner, docstatus, idx, enable_gps_tracking, enable_customer_portal)
+        VALUES ('Field Maintenance Settings', NOW(), NOW(), 'Administrator', 'Administrator', 0, 0, 1, 1)
+    """)
     frappe.db.commit()
     
     try:
-        doc = frappe.get_doc("Field Maintenance Settings")
-        print("SUCCESS:", doc.name, doc.enable_gps_tracking)
+        doc = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+        print("SUCCESS MULTI:", doc.name, doc.enable_gps_tracking)
         return {"status": "success", "doc": doc.name}
     except Exception as e:
-        print("FAILED:", str(e))
+        print("FAILED MULTI:", str(e))
         return {"status": "error", "message": str(e)}
