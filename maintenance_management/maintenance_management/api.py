@@ -1454,3 +1454,20 @@ def audit_error():
     recs = frappe.db.sql("SELECT * FROM `tabField Maintenance Settings`", as_dict=True)
     print("Table records:", recs)
     return {"status": "audited", "notifications_count": len(notifications), "records": recs}
+
+@frappe.whitelist()
+def fix_settings_name():
+    print("=== FIXING SETTINGS NAME ===")
+    recs = frappe.db.sql("SELECT name FROM `tabField Maintenance Settings`", as_dict=True)
+    for r in recs:
+        if r.name != "Field Maintenance Settings":
+            try:
+                frappe.rename_doc("Field Maintenance Settings", r.name, "Field Maintenance Settings", force=True)
+                print(f"Renamed {r.name} to Field Maintenance Settings")
+            except Exception as e:
+                print(f"Rename failed: {e}")
+                # Fallback to direct SQL update if rename fails due to links
+                frappe.db.sql("UPDATE `tabField Maintenance Settings` SET name='Field Maintenance Settings' WHERE name=%s", r.name)
+                print(f"Directly updated SQL name from {r.name} to Field Maintenance Settings")
+    frappe.db.commit()
+    return "Settings name fixed successfully"
