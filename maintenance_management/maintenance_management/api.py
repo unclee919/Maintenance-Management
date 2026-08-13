@@ -1500,6 +1500,6 @@ def fix_single_settings():
     frappe.db.sql("DELETE FROM `tabField Maintenance Settings`")
     frappe.db.commit()
     
-    doc = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+    doc = frappe.get_single("Field Maintenance Settings")
     print("Successfully loaded Single Doc:", doc.name)
     return {"status": "success", "message": "Single settings fixed successfully"}
