@@ -70,41 +70,47 @@ def assign_technician_weighted(doc):
         score = 0.0
         
         # 1. Proximity (Weight)
-        if "Proximity" in weights:
+        if weights.get("Geographical Proximity") or weights.get("Proximity"):
+            w = weights.get("Geographical Proximity") or weights.get("Proximity")
             dist = calc_distance(flt(tech.current_latitude or 0), flt(tech.current_longitude or 0), cust_lat, cust_lon)
-            # Max score for distance < 5km, decreases linearly to 50km
             prox_score = max(0, 100 - (dist * 2)) 
-            score += (prox_score * weights["Proximity"] / 100.0)
+            score += (prox_score * w / 100.0)
 
         # 2. Skill Match
-        if "Skill Match" in weights:
+        if weights.get("Skill & Specialization Match") or weights.get("Skill Match"):
+            w = weights.get("Skill & Specialization Match") or weights.get("Skill Match")
             skill_score = 100.0 if tech.specialty_equipment == equipment else 0.0
-            score += (skill_score * weights["Skill Match"] / 100.0)
+            score += (skill_score * w / 100.0)
 
-        # 3. Availability (Already filtered by Available, but could be refined)
-        if "Availability" in weights:
-            score += (100.0 * weights["Availability"] / 100.0)
+        # 3. Availability
+        if weights.get("Technician Availability (Status)") or weights.get("Availability"):
+            w = weights.get("Technician Availability (Status)") or weights.get("Availability")
+            score += (100.0 * w / 100.0)
 
         # 4. Workload Balance
-        if "Workload Balance" in weights:
+        if weights.get("Workload Balance (Open Orders)") or weights.get("Workload Balance"):
+            w = weights.get("Workload Balance (Open Orders)") or weights.get("Workload Balance")
             open_orders = frappe.db.count("Sales Order", {"custom_assigned_technician": tech.name, "custom_maintenance_status": ["not in", ["Completed", "Cancelled"]]})
             workload_score = max(0, 100 - (open_orders * 20))
-            score += (workload_score * weights["Workload Balance"] / 100.0)
+            score += (workload_score * w / 100.0)
 
         # 5. Past Performance
-        if "Performance" in weights:
+        if weights.get("Historical Completion Rate") or weights.get("Performance"):
+            w = weights.get("Historical Completion Rate") or weights.get("Performance")
             perf_score = flt(tech.get("performance_rating") or 80.0)
-            score += (perf_score * weights["Performance"] / 100.0)
+            score += (perf_score * w / 100.0)
 
         # 6. Service Zone
-        if "Service Zone" in weights:
+        if weights.get("Home Service Area Belonging") or weights.get("Service Zone"):
+            w = weights.get("Home Service Area Belonging") or weights.get("Service Zone")
             zone_score = 100.0 if tech.service_zone == cust_zone else 0.0
-            score += (zone_score * weights["Service Zone"] / 100.0)
+            score += (zone_score * w / 100.0)
 
-        # 7. Route Optimization
-        if "Route Alignment" in weights:
+        # 7. Route Alignment
+        if weights.get("Route Alignment with Scheduled Visits") or weights.get("Route Alignment"):
+            w = weights.get("Route Alignment with Scheduled Visits") or weights.get("Route Alignment")
             # Placeholder for route alignment logic
-            score += (70.0 * weights["Route Alignment"] / 100.0)
+            score += (70.0 * w / 100.0)
 
         scored_techs.append({"tech": tech.name, "score": score})
 
@@ -330,7 +336,15 @@ def send_technician_notification(doc, appointment_name, technician_override=None
     if not tech:
         return
     tech_doc = frappe.get_doc("Field Technician", tech)
-    user_email = tech_doc.get("user_id") or tech_doc.get("email")
+    target_user = tech_doc.get("user")
+    user_email = target_user or tech_doc.get("email")
+    
+    # Ensure we have an email for sendmail and a user for Notification Log
+    if user_email and "@" not in user_email:
+        user_email = frappe.db.get_value("User", user_email, "email")
+    
+    if not target_user and user_email:
+        target_user = frappe.db.get_value("User", {"email": user_email}, "name")
     
     msg = f"""
     <div style="font-family: Arial, sans-serif; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
@@ -359,12 +373,14 @@ def send_technician_notification(doc, appointment_name, technician_override=None
             )
         except Exception:
             pass
+    
+    if target_user:
         try:
             frappe.get_doc({
                 "doctype": "Notification Log",
                 "subject": f"New Maintenance Dispatch: {doc.name}",
                 "email_content": msg,
-                "for_user": user_email,
+                "for_user": target_user,
                 "document_type": "Service Appointment",
                 "document_name": appointment_name
             }).insert(ignore_permissions=True)
