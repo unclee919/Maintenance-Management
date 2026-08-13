@@ -9,6 +9,7 @@
   "customer",
   "service_request",
   "sales_order",
+  "sales_order_item",
   "column_break_1",
   "status",
   "priority",
@@ -49,6 +50,11 @@
    "fieldtype": "Link",
    "label": "Sales Order",
    "options": "Sales Order"
+  },
+  {
+   "fieldname": "sales_order_item",
+   "fieldtype": "Data",
+   "label": "Sales Order Item Row ID"
   },
   {
    "fieldname": "column_break_1",

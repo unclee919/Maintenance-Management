@@ -190,5 +190,28 @@
   "label": "Customer Rating",
   "allow_on_submit": 1,
   "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_technician",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_technician",
+  "fieldtype": "Link",
+  "options": "Field Technician",
+  "insert_after": "item_name",
+  "label": "Assigned Technician",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_status",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_status",
+  "fieldtype": "Select",
+  "options": "New\nScheduled\nDispatched\nAccepted\nIn Progress\nCompleted\nCancelled",
+  "default": "New",
+  "insert_after": "custom_technician",
+  "label": "Service Status",
+  "module": "Maintenance Management"
  }
 ]

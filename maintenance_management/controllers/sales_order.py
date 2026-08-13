@@ -249,25 +249,29 @@ def before_save(doc, method=None):
 def create_service_appointment(doc):
     if not doc.get("custom_is_maintenance_order"):
         return
-    existing = frappe.db.exists("Service Appointment", {"sales_order": doc.name})
-    if not existing:
-        sa = frappe.get_doc({
-            "doctype": "Service Appointment",
-            "customer": doc.customer,
-            "sales_order": doc.name,
-            "status": "Scheduled",
-            "priority": doc.get("priority") or "Medium",
-            "scheduled_date": doc.get("custom_scheduled_date_time") or now(),
-            "duration_hours": 2,
-            "technician": doc.get("custom_assigned_technician") or doc.get("assigned_technicians") or None,
-            "notes": f"Automated Service Appointment for Maintenance Sales Order {doc.name}"
-        })
-        sa.insert(ignore_permissions=True)
-        if doc.get("custom_assigned_technician"):
-            send_technician_notification(doc, sa.name)
+    
+    for item in doc.items:
+        existing = frappe.db.exists("Service Appointment", {"sales_order": doc.name, "sales_order_item": item.name})
+        if not existing:
+            tech = item.get("custom_technician") or doc.get("custom_assigned_technician") or doc.get("assigned_technicians") or None
+            sa = frappe.get_doc({
+                "doctype": "Service Appointment",
+                "customer": doc.customer,
+                "sales_order": doc.name,
+                "sales_order_item": item.name,
+                "status": "Scheduled",
+                "priority": doc.get("priority") or "Medium",
+                "scheduled_date": item.get("custom_scheduled_date_time") or doc.get("custom_scheduled_date_time") or now(),
+                "duration_hours": 2,
+                "technician": tech,
+                "notes": f"Service Appointment for item {item.item_code} on Sales Order {doc.name}"
+            })
+            sa.insert(ignore_permissions=True)
+            if tech:
+                send_technician_notification(doc, sa.name, technician_override=tech)
 
-def send_technician_notification(doc, appointment_name):
-    tech = doc.get("custom_assigned_technician")
+def send_technician_notification(doc, appointment_name, technician_override=None):
+    tech = technician_override or doc.get("custom_assigned_technician")
     if not tech:
         return
     tech_doc = frappe.get_doc("Field Technician", tech)
