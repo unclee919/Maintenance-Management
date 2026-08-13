@@ -443,9 +443,7 @@ def accept_dispatch(appointment_name):
         sa.status = "Accepted"
         sa.save(ignore_permissions=True)
         if sa.sales_order:
-            so = frappe.get_doc("Sales Order", sa.sales_order)
-            so.custom_maintenance_status = "Accepted"
-            so.save(ignore_permissions=True)
+            frappe.db.set_value("Sales Order", sa.sales_order, "custom_maintenance_status", "Accepted")
         frappe.db.commit()
         return {"status": "success", "message": "Dispatch accepted successfully."}
     except Exception as e:
@@ -461,11 +459,11 @@ def reject_dispatch(appointment_name, reason="Not Available"):
         sa.notes = f"{sa.notes or ''}\nRejected by technician. Reason: {reason}"
         sa.save(ignore_permissions=True)
         if sa.sales_order:
-            so = frappe.get_doc("Sales Order", sa.sales_order)
-            so.custom_maintenance_status = "Pending Confirmation"
-            so.custom_assigned_technician = ""
-            so.assigned_technicians = ""
-            so.save(ignore_permissions=True)
+            frappe.db.set_value("Sales Order", sa.sales_order, {
+                "custom_maintenance_status": "Pending Confirmation",
+                "custom_assigned_technician": "",
+                "assigned_technicians": ""
+            })
         frappe.db.commit()
         return {"status": "success", "message": "Dispatch rejected and order returned to queue for reassignment."}
     except Exception as e:

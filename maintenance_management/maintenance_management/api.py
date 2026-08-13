@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import frappe
+from frappe import _
 
 @frappe.whitelist(allow_guest=True)
 def track_request(request_id):
@@ -1614,3 +1615,26 @@ def test_accept_reject_workflow():
         'reject_result': reject_res,
         'status_after_reject': status_after_reject
     }
+
+
+def get_sales_order_dashboard(data=None):
+    """Overrides Sales Order dashboard to include Service Appointment properly without unknown column errors."""
+    if not data:
+        data = {}
+    if "transactions" not in data:
+        data["transactions"] = []
+    
+    # Check if Service Appointment is already in transactions
+    found = False
+    for group in data.get("transactions", []):
+        if "Service Appointment" in group.get("items", []):
+            found = True
+            break
+            
+    if not found:
+        data["transactions"].append({
+            "label": _("Maintenance"),
+            "items": ["Service Appointment"]
+        })
+        
+    return data
