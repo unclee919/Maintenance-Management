@@ -1315,6 +1315,6 @@ frappe.ui.form.on('Service Appointment', {
 
 @frappe.whitelist()
 def check_modules():
-    mods = frappe.get_all("Module Def", fields=["name", "module_name", "app"])
+    mods = frappe.get_all("Module Def", fields=["name", "module_name"])
     print("MODULE DEFS:", mods)
     return mods
