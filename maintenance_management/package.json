@@ -1,0 +1,9 @@
+{
+  "name": "maintenance_management",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Field Maintenance Management for ERPNext",
+  "scripts": {
+    "build": "echo 'No build step required'"
+  }
+}
