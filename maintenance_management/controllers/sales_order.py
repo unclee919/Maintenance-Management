@@ -121,9 +121,83 @@ def assign_technician_weighted(doc):
     
     return best_tech
 
-def auto_assign_tech(doc, method=None):
+def assign_technician_weighted_for_item(doc, item):
+    """7-Criteria Weighted Assignment Engine per Sales Order Item"""
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+    weights = {}
+    for row in settings.get("weighted_criteria", []):
+        if row.enabled:
+            weights[row.criterion] = flt(row.weight)
+    
+    if not weights:
+        weights = {"Skill Match": 100.0}
+
+    technicians = frappe.get_all("Field Technician", filters={"status": "Available"}, fields=["*"])
+    if not technicians:
+        return None
+
+    scored_techs = []
+    cust_lat = flt(doc.get("custom_customer_lat") or 30.0444)
+    cust_lon = flt(doc.get("custom_customer_lon") or 31.2357)
+    equipment = item.get("custom_equipment_type") or item.item_code
+    cust_zone = doc.get("territory")
+
+    for tech in technicians:
+        score = 0.0
+        
+        # 1. Proximity
+        if "Proximity" in weights:
+            dist = calc_distance(flt(tech.current_latitude or 0), flt(tech.current_longitude or 0), cust_lat, cust_lon)
+            prox_score = max(0, 100 - (dist * 2)) 
+            score += (prox_score * weights["Proximity"] / 100.0)
+
+        # 2. Skill Match
+        if "Skill Match" in weights:
+            skill_score = 100.0 if tech.specialty_equipment == equipment else 0.0
+            score += (skill_score * weights["Skill Match"] / 100.0)
+
+        # 3. Availability
+        if "Availability" in weights:
+            score += (100.0 * weights["Availability"] / 100.0)
+
+        # 4. Workload Balance
+        if "Workload Balance" in weights:
+            open_orders = frappe.db.count("Sales Order Item", {"custom_technician": tech.name, "custom_status": ["not in", ["Completed", "Cancelled"]]})
+            workload_score = max(0, 100 - (open_orders * 20))
+            score += (workload_score * weights["Workload Balance"] / 100.0)
+
+        # 5. Past Performance
+        if "Performance" in weights:
+            perf_score = flt(tech.get("performance_rating") or 80.0)
+            score += (perf_score * weights["Performance"] / 100.0)
+
+        # 6. Service Zone
+        if "Service Zone" in weights:
+            zone_score = 100.0 if tech.service_zone == cust_zone else 0.0
+            score += (zone_score * weights["Service Zone"] / 100.0)
+
+        # 7. Route Optimization
+        if "Route Alignment" in weights:
+            score += (70.0 * weights["Route Alignment"] / 100.0)
+
+        scored_techs.append({"tech": tech.name, "score": score})
+
+    if not scored_techs:
+        return None
+
+    scored_techs.sort(key=lambda x: x["score"], reverse=True)
+    best_tech = scored_techs[0]["tech"]
+    
+    item.custom_technician = best_tech
+    item.custom_status = "Assigned"
+    item.db_set("custom_technician", best_tech)
+    item.db_set("custom_status", "Assigned")
+    
+    return best_tech
+
+def auto_assign_tech_for_item(doc, item):
     _ensure_sql_patch()
-    if doc.get("custom_assigned_technician") or doc.get("assigned_technicians"):
+    if item.get("custom_technician"):
         return
     
     try:
@@ -131,9 +205,9 @@ def auto_assign_tech(doc, method=None):
         if not settings.get("auto_assign_technician"):
             return
         
-        assign_technician_weighted(doc)
+        assign_technician_weighted_for_item(doc, item)
     except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "Auto Assign Tech Error")
+        frappe.log_error(frappe.get_traceback(), "Auto Assign Tech Item Error")
 
 def check_sla_escalations():
     _ensure_sql_patch()
@@ -200,30 +274,7 @@ def validate(doc, method=None):
     _ensure_sql_patch()
     if not doc.get("custom_is_maintenance_order"):
         return
-
-    if doc.is_new():
-        if not doc.get("custom_maintenance_status"):
-            doc.custom_maintenance_status = "New"
-        return
-        
-    old_status = frappe.db.get_value("Sales Order", doc.name, "custom_maintenance_status") if not doc.is_new() else "New"
-    new_status = doc.custom_maintenance_status
-    
-    if old_status and old_status != new_status:
-        allowed_transitions = {
-            "New": ["Pending Confirmation", "Assigned", "Accepted", "Cancelled"],
-            "Pending Confirmation": ["Assigned", "Accepted", "Cancelled"],
-            "Assigned": ["Accepted", "In Progress", "Cancelled"],
-            "Accepted": ["In Progress", "Cancelled"],
-            "In Progress": ["Waiting for Part", "Completed", "Cancelled"],
-            "Waiting for Part": ["In Progress", "Completed", "Cancelled"],
-            "Completed": [],
-            "Cancelled": []
-        }
-        
-        is_admin = frappe.session.user in ["Administrator", "admin@example.com"]
-        if not is_admin and new_status not in allowed_transitions.get(old_status, []):
-            frappe.throw(_("Invalid maintenance status transition from '{0}' to '{1}'.").format(old_status, new_status))
+    # Status validation is handled per item in Sales Order Item table
 
 def before_save(doc, method=None):
     _ensure_sql_patch()
@@ -320,8 +371,11 @@ def after_insert(doc, method=None):
     _ensure_sql_patch()
     if not doc.get("custom_is_maintenance_order"):
         return
-    if doc.custom_maintenance_status == "New" and not doc.get("custom_assigned_technician"):
-        auto_assign_tech(doc)
+    for item in doc.items:
+        if not item.get("custom_status"):
+            item.custom_status = "New"
+        if not item.get("custom_technician"):
+            auto_assign_tech_for_item(doc, item)
     if doc.docstatus == 1:
         create_service_appointment(doc)
 
@@ -329,8 +383,11 @@ def on_update(doc, method=None):
     _ensure_sql_patch()
     if not doc.get("custom_is_maintenance_order"):
         return
-    if doc.custom_maintenance_status == "Assigned" and not doc.get("custom_assigned_technician"):
-        auto_assign_tech(doc)
+    for item in doc.items:
+        if not item.get("custom_status"):
+            item.custom_status = "New"
+        if not item.get("custom_technician"):
+            auto_assign_tech_for_item(doc, item)
     if doc.docstatus == 1:
         create_service_appointment(doc)
     process_erpnext_integration(doc)
