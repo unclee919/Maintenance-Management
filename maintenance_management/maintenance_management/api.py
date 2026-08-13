@@ -119,6 +119,7 @@ def after_migrate():
         {"type": "shortcut", "data": {"shortcut_name": "Field Technician", "col": 4}},
         {"type": "shortcut", "data": {"shortcut_name": "Service Appointment", "col": 4}},
         {"type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 4}},
+        {"type": "shortcut", "data": {"shortcut_name": "AMC Contract", "col": 4}},
     ])
     ws.save(ignore_permissions=True)
 
@@ -133,12 +134,16 @@ def after_migrate():
             {"type": "card", "data": {"card_name": "Available Technicians", "col": 6}},
             {"type": "spacer", "data": {"col": 12}},
             {"type": "header", "data": {"text": "🚀 Field Action Shortcuts", "col": 12}},
-            {"type": "shortcut", "data": {"shortcut_name": "Active Service Orders", "col": 4}},
+            {"type": "shortcut", "data": {"shortcut_name": "Service Appointment", "col": 4}},
             {"type": "shortcut", "data": {"shortcut_name": "Van Warehouse", "col": 4}},
             {"type": "shortcut", "data": {"shortcut_name": "Field Technician Profile", "col": 4}},
         ])
         ws_tech.save(ignore_permissions=True)
 
+    # 5. Clean up redundant Field Service Request from Workspace and Sidebar
+    frappe.db.sql("DELETE FROM `tabWorkspace Link` WHERE link_to = 'Field Service Request'")
+    frappe.db.sql("DELETE FROM `tabWorkspace Shortcut` WHERE link_to = 'Field Service Request'")
+    
     frappe.db.commit()
 
 @frappe.whitelist()
@@ -1359,3 +1364,49 @@ def clean_redundant_doctypes():
                 print(f"Error deleting {dt}: {e}")
     frappe.db.commit()
     return "Redundant DocTypes cleaned successfully."
+
+@frappe.whitelist()
+def execute_fix():
+    print('--- Starting Sales Order & Notification Fix ---')
+    so_fields = [
+        {
+            'fieldname': 'priority',
+            'label': 'Priority',
+            'fieldtype': 'Select',
+            'options': 'Low\nMedium\nHigh\nUrgent',
+            'default': 'Medium',
+            'insert_after': 'customer_name'
+        },
+        {
+            'fieldname': 'custom_is_maintenance_order',
+            'label': 'Is Maintenance Order',
+            'fieldtype': 'Check',
+            'default': 1,
+            'insert_after': 'priority'
+        }
+    ]
+    
+    for field in so_fields:
+        if not frappe.db.exists('Custom Field', {'dt': 'Sales Order', 'fieldname': field['fieldname']}):
+            df = {
+                'doctype': 'Custom Field',
+                'dt': 'Sales Order',
+                **field
+            }
+            frappe.get_doc(df).insert(ignore_permissions=True)
+            print(f"Added custom field {field['fieldname']} to Sales Order")
+        else:
+            print(f"Custom field {field['fieldname']} already exists on Sales Order")
+            
+    # Check notifications
+    notifications = frappe.get_all('Notification', filters={'document_type': 'Sales Order'})
+    for n in notifications:
+        doc = frappe.get_doc('Notification', n.name)
+        if doc.condition and 'doc.priority' in doc.condition:
+            doc.condition = doc.condition.replace('doc.priority', 'doc.get("priority") or "Medium"')
+            doc.save(ignore_permissions=True)
+            print(f"Updated notification condition for {doc.name}")
+            
+    frappe.db.commit()
+    print('--- Fix Completed Successfully ---')
+    return "Fix completed successfully"
