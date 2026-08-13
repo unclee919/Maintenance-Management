@@ -1,12 +1,22 @@
 [
  {
   "doctype": "Custom Field",
-  "name": "Sales Order-maintenance_section_break",
+  "name": "Sales Order-maintenance_tab",
   "dt": "Sales Order",
-  "fieldname": "maintenance_section_break",
+  "fieldname": "maintenance_tab",
+  "fieldtype": "Tab Break",
+  "insert_after": "more_info",
+  "label": "Maintenance",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-maintenance_details_sb",
+  "dt": "Sales Order",
+  "fieldname": "maintenance_details_sb",
   "fieldtype": "Section Break",
-  "insert_after": "customer",
-  "label": "Field Maintenance Management",
+  "insert_after": "maintenance_tab",
+  "label": "Service Request Details",
   "collapsible": 1,
   "module": "Maintenance Management"
  },
@@ -16,9 +26,19 @@
   "dt": "Sales Order",
   "fieldname": "custom_is_maintenance_order",
   "fieldtype": "Check",
-  "insert_after": "maintenance_section_break",
+  "insert_after": "maintenance_details_sb",
   "label": "Is Maintenance Order",
   "default": 1,
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-custom_is_emergency",
+  "dt": "Sales Order",
+  "fieldname": "custom_is_emergency",
+  "fieldtype": "Check",
+  "insert_after": "custom_is_maintenance_order",
+  "label": "Emergency Dispatch",
   "module": "Maintenance Management"
  },
  {
@@ -27,7 +47,7 @@
   "dt": "Sales Order",
   "fieldname": "custom_maintenance_status",
   "fieldtype": "Select",
-  "insert_after": "custom_is_maintenance_order",
+  "insert_after": "custom_is_emergency",
   "label": "Maintenance Status",
   "options": "New\nPending Confirmation\nScheduled\nDispatched\nAccepted\nArrived\nIn Progress\nCompleted\nCancelled",
   "default": "New",
@@ -65,12 +85,34 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Order-scheduling_sb",
+  "dt": "Sales Order",
+  "fieldname": "scheduling_sb",
+  "fieldtype": "Section Break",
+  "insert_after": "equipment_serial_no",
+  "label": "Scheduling & Assignment",
+  "collapsible": 1,
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
   "name": "Sales Order-scheduled_date_time",
   "dt": "Sales Order",
   "fieldname": "scheduled_date_time",
   "fieldtype": "Datetime",
-  "insert_after": "equipment_serial_no",
+  "insert_after": "scheduling_sb",
   "label": "Scheduled Date & Time",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-custom_assigned_technician",
+  "dt": "Sales Order",
+  "fieldname": "custom_assigned_technician",
+  "fieldtype": "Link",
+  "options": "Field Technician",
+  "insert_after": "scheduled_date_time",
+  "label": "Assigned Technician",
   "module": "Maintenance Management"
  },
  {
@@ -79,7 +121,7 @@
   "dt": "Sales Order",
   "fieldname": "sla_status",
   "fieldtype": "Select",
-  "insert_after": "scheduled_date_time",
+  "insert_after": "custom_assigned_technician",
   "label": "SLA Status",
   "options": "On Time\nWarning\nBreached",
   "default": "On Time",
@@ -87,12 +129,24 @@
  },
  {
   "doctype": "Custom Field",
-  "name": "Sales Order-customer_signature",
+  "name": "Sales Order-execution_sb",
   "dt": "Sales Order",
-  "fieldname": "customer_signature",
-  "fieldtype": "Signature",
+  "fieldname": "execution_sb",
+  "fieldtype": "Section Break",
   "insert_after": "sla_status",
-  "label": "Customer Signature",
+  "label": "Service Execution",
+  "collapsible": 1,
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-custom_maintenance_checklist",
+  "dt": "Sales Order",
+  "fieldname": "custom_maintenance_checklist",
+  "fieldtype": "Table",
+  "options": "Maintenance Checklist Item",
+  "insert_after": "execution_sb",
+  "label": "QC Maintenance Checklist",
   "module": "Maintenance Management"
  },
  {
@@ -101,39 +155,40 @@
   "dt": "Sales Order",
   "fieldname": "service_photo",
   "fieldtype": "Attach Image",
-  "insert_after": "customer_signature",
+  "insert_after": "custom_maintenance_checklist",
   "label": "Service Completion Photo",
   "module": "Maintenance Management"
  },
  {
   "doctype": "Custom Field",
-  "name": "Sales Order-assigned_technicians",
+  "name": "Sales Order-customer_signature",
   "dt": "Sales Order",
-  "fieldname": "assigned_technicians",
-  "fieldtype": "Small Text",
+  "fieldname": "customer_signature",
+  "fieldtype": "Signature",
   "insert_after": "service_photo",
-  "label": "Assigned Technicians",
+  "label": "Customer Signature",
   "module": "Maintenance Management"
  },
  {
   "doctype": "Custom Field",
-  "name": "Sales Order-is_warranty_claim",
+  "name": "Sales Order-feedback_sb",
   "dt": "Sales Order",
-  "fieldname": "is_warranty_claim",
-  "fieldtype": "Check",
-  "insert_after": "assigned_technicians",
-  "label": "Is Warranty Claim",
+  "fieldname": "feedback_sb",
+  "fieldtype": "Section Break",
+  "insert_after": "customer_signature",
+  "label": "Customer Feedback",
+  "collapsible": 1,
   "module": "Maintenance Management"
  },
  {
   "doctype": "Custom Field",
-  "name": "Sales Order-original_order_ref",
+  "name": "Sales Order-custom_customer_rating",
   "dt": "Sales Order",
-  "fieldname": "original_order_ref",
-  "fieldtype": "Link",
-  "options": "Sales Order",
-  "insert_after": "is_warranty_claim",
-  "label": "Original Order Reference",
+  "fieldname": "custom_customer_rating",
+  "fieldtype": "Rating",
+  "insert_after": "feedback_sb",
+  "label": "Customer Rating",
+  "allow_on_submit": 1,
   "module": "Maintenance Management"
  }
 ]
