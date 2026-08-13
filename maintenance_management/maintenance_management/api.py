@@ -145,7 +145,7 @@ def after_migrate():
     m_ws.number_cards = []
     m_ws.append("charts", {"chart_name": "Orders by Status", "label": "Orders by Status"})
     for card_name in ["Active Service Orders Count", "Avg Response Time", "Total Maintenance Revenue", "CSAT Rating"]:
-        m_ws.append("number_cards", {"number_card": card_name, "label": card_name})
+        m_ws.append("number_cards", {"number_card_name": card_name, "label": card_name})
     m_ws.append("shortcuts", {"shortcut_name": "Technician Live Tracking", "link_to": "technician-tracking", "type": "Page", "label": "Live Map & Tracking"})
     m_ws.append("shortcuts", {"shortcut_name": "Field Maintenance Settings", "link_to": "Field Maintenance Settings", "type": "DocType", "label": "System Settings"})
     m_ws.content = json.dumps([
@@ -181,7 +181,7 @@ def after_migrate():
     t_ws.shortcuts = []
     t_ws.number_cards = []
     for card_name in ["My Open Orders", "My Completed Today", "My Efficiency Score"]:
-        t_ws.append("number_cards", {"number_card": card_name, "label": card_name})
+        t_ws.append("number_cards", {"number_card_name": card_name, "label": card_name})
     t_ws.append("shortcuts", {"shortcut_name": "Service Appointment", "link_to": "Service Appointment", "type": "DocType", "label": "My Appointments"})
     t_ws.append("shortcuts", {"shortcut_name": "Sales Order", "link_to": "Sales Order", "type": "DocType", "label": "My Sales Orders"})
     t_ws.append("shortcuts", {"shortcut_name": "Stock Entry", "link_to": "Stock Entry", "type": "DocType", "label": "My Van Stock"})
