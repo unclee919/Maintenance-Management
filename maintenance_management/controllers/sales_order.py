@@ -255,11 +255,12 @@ def create_service_appointment(doc):
             "doctype": "Service Appointment",
             "customer": doc.customer,
             "sales_order": doc.name,
+            "sales_order": doc.name,
             "status": "Scheduled" if doc.get("custom_assigned_technician") else "New",
             "priority": doc.get("priority") or "Medium",
             "scheduled_date": doc.get("custom_scheduled_date_time") or now(),
             "duration_hours": 2,
-            "technician": doc.get("custom_assigned_technician"),
+            "technician": doc.get("custom_assigned_technician") or doc.get("assigned_technicians") or None,
             "notes": f"Automated Service Appointment for Maintenance Sales Order {doc.name}"
         })
         sa.insert(ignore_permissions=True)

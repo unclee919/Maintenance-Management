@@ -92,7 +92,7 @@
    "fieldtype": "Link",
    "label": "Technician",
    "options": "Field Technician",
-   "reqd": 1
+   "reqd": 0
   },
   {
    "fieldname": "van_warehouse",
