@@ -1320,6 +1320,14 @@ def check_modules():
     return mods
 
 @frappe.whitelist()
+def check_doctypes():
+    doctypes = frappe.get_all("DocType", filters={"module": "Maintenance Management"}, fields=["name", "istable", "issingle"])
+    print(f"Total DocTypes: {len(doctypes)}")
+    for d in doctypes:
+        print(f"- {d['name']} (Child Table: {d['istable']}, Single: {d['issingle']})")
+    return doctypes
+
+@frappe.whitelist()
 def clean_modules():
     # Merge or delete duplicate module defs
     target = "Maintenance Management"
