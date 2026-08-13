@@ -1654,3 +1654,14 @@ def test_technician_notification(user=None):
     
     frappe.db.commit()
     return {"status": "success", "message": "Notification triggered for " + user}
+
+@frappe.whitelist()
+def check_settings():
+    exists = frappe.db.exists("Field Maintenance Settings", "Field Maintenance Settings")
+    if not exists:
+        s = frappe.new_doc("Field Maintenance Settings")
+        s.name = "Field Maintenance Settings"
+        s.insert(ignore_permissions=True)
+        frappe.db.commit()
+        return {"status": "created", "name": s.name}
+    return {"status": "exists", "name": "Field Maintenance Settings"}
