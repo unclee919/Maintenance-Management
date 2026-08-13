@@ -1665,3 +1665,28 @@ def check_settings():
         frappe.db.commit()
         return {"status": "created", "name": s.name}
     return {"status": "exists", "name": "Field Maintenance Settings"}
+
+@frappe.whitelist()
+def run_test_so():
+    customer = frappe.db.get_value("Customer", {}, "name")
+    item_code = frappe.db.get_value("Item", {}, "name")
+    
+    if not customer or not item_code:
+        return {"status": "error", "message": "No customer or item found"}
+
+    so = frappe.new_doc("Sales Order")
+    so.customer = customer
+    so.delivery_date = frappe.utils.add_days(frappe.utils.nowdate(), 1)
+    so.custom_is_maintenance_order = 1
+    so.append("items", {
+        "item_code": item_code,
+        "qty": 1,
+        "rate": 100,
+        "delivery_date": so.delivery_date
+    })
+    so.insert(ignore_permissions=True)
+    so.submit()
+    frappe.db.commit()
+    
+    sa = frappe.get_all("Service Appointment", filters={"sales_order": so.name}, fields=["name", "technician", "status"])
+    return {"status": "success", "sales_order": so.name, "service_appointments": sa}
