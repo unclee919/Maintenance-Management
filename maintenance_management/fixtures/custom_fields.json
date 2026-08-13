@@ -16,7 +16,7 @@
   "fieldname": "maintenance_details_sb",
   "fieldtype": "Section Break",
   "insert_after": "maintenance_tab",
-  "label": "Service Request Details",
+  "label": "General Order Maintenance Settings",
   "collapsible": 1,
   "module": "Maintenance Management"
  },
@@ -43,152 +43,13 @@
  },
  {
   "doctype": "Custom Field",
-  "name": "Sales Order-custom_maintenance_status",
-  "dt": "Sales Order",
-  "fieldname": "custom_maintenance_status",
-  "fieldtype": "Select",
-  "insert_after": "custom_is_emergency",
-  "label": "Maintenance Status",
-  "options": "New\nPending Confirmation\nScheduled\nDispatched\nAccepted\nArrived\nIn Progress\nCompleted\nCancelled",
-  "default": "New",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-custom_problem_description",
-  "dt": "Sales Order",
-  "fieldname": "custom_problem_description",
-  "fieldtype": "Small Text",
-  "insert_after": "custom_maintenance_status",
-  "label": "Problem Description",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-equipment_type",
-  "dt": "Sales Order",
-  "fieldname": "equipment_type",
-  "fieldtype": "Data",
-  "insert_after": "custom_problem_description",
-  "label": "Equipment Type",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-equipment_serial_no",
-  "dt": "Sales Order",
-  "fieldname": "equipment_serial_no",
-  "fieldtype": "Data",
-  "insert_after": "equipment_type",
-  "label": "Equipment Serial No",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-scheduling_sb",
-  "dt": "Sales Order",
-  "fieldname": "scheduling_sb",
+  "name": "Sales Order Item-maintenance_item_section",
+  "dt": "Sales Order Item",
+  "fieldname": "maintenance_item_section",
   "fieldtype": "Section Break",
-  "insert_after": "equipment_serial_no",
-  "label": "Scheduling & Assignment",
+  "insert_after": "item_name",
+  "label": "Service & Maintenance Details",
   "collapsible": 1,
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-scheduled_date_time",
-  "dt": "Sales Order",
-  "fieldname": "scheduled_date_time",
-  "fieldtype": "Datetime",
-  "insert_after": "scheduling_sb",
-  "label": "Scheduled Date & Time",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-custom_assigned_technician",
-  "dt": "Sales Order",
-  "fieldname": "custom_assigned_technician",
-  "fieldtype": "Link",
-  "options": "Field Technician",
-  "insert_after": "scheduled_date_time",
-  "label": "Assigned Technician",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-sla_status",
-  "dt": "Sales Order",
-  "fieldname": "sla_status",
-  "fieldtype": "Select",
-  "insert_after": "custom_assigned_technician",
-  "label": "SLA Status",
-  "options": "On Time\nWarning\nBreached",
-  "default": "On Time",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-execution_sb",
-  "dt": "Sales Order",
-  "fieldname": "execution_sb",
-  "fieldtype": "Section Break",
-  "insert_after": "sla_status",
-  "label": "Service Execution",
-  "collapsible": 1,
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-custom_maintenance_checklist",
-  "dt": "Sales Order",
-  "fieldname": "custom_maintenance_checklist",
-  "fieldtype": "Table",
-  "options": "Maintenance Checklist Item",
-  "insert_after": "execution_sb",
-  "label": "QC Maintenance Checklist",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-service_photo",
-  "dt": "Sales Order",
-  "fieldname": "service_photo",
-  "fieldtype": "Attach Image",
-  "insert_after": "custom_maintenance_checklist",
-  "label": "Service Completion Photo",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-customer_signature",
-  "dt": "Sales Order",
-  "fieldname": "customer_signature",
-  "fieldtype": "Signature",
-  "insert_after": "service_photo",
-  "label": "Customer Signature",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-feedback_sb",
-  "dt": "Sales Order",
-  "fieldname": "feedback_sb",
-  "fieldtype": "Section Break",
-  "insert_after": "customer_signature",
-  "label": "Customer Feedback",
-  "collapsible": 1,
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
-  "name": "Sales Order-custom_customer_rating",
-  "dt": "Sales Order",
-  "fieldname": "custom_customer_rating",
-  "fieldtype": "Rating",
-  "insert_after": "feedback_sb",
-  "label": "Customer Rating",
-  "allow_on_submit": 1,
   "module": "Maintenance Management"
  },
  {
@@ -198,7 +59,7 @@
   "fieldname": "custom_technician",
   "fieldtype": "Link",
   "options": "Field Technician",
-  "insert_after": "item_name",
+  "insert_after": "maintenance_item_section",
   "label": "Assigned Technician",
   "module": "Maintenance Management"
  },
@@ -212,6 +73,100 @@
   "default": "New",
   "insert_after": "custom_technician",
   "label": "Service Status",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_problem_description",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_problem_description",
+  "fieldtype": "Small Text",
+  "insert_after": "custom_status",
+  "label": "Problem Description",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_equipment_type",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_equipment_type",
+  "fieldtype": "Data",
+  "insert_after": "custom_problem_description",
+  "label": "Equipment Type",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_equipment_serial_no",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_equipment_serial_no",
+  "fieldtype": "Data",
+  "insert_after": "custom_equipment_type",
+  "label": "Equipment Serial No",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_scheduled_date_time",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_scheduled_date_time",
+  "fieldtype": "Datetime",
+  "insert_after": "custom_equipment_serial_no",
+  "label": "Scheduled Date & Time",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_sla_status",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_sla_status",
+  "fieldtype": "Select",
+  "options": "On Time\nWarning\nBreached",
+  "default": "On Time",
+  "insert_after": "custom_scheduled_date_time",
+  "label": "SLA Status",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_maintenance_checklist",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_maintenance_checklist",
+  "fieldtype": "Table",
+  "options": "Maintenance Checklist Item",
+  "insert_after": "custom_sla_status",
+  "label": "QC Maintenance Checklist",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_service_photo",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_service_photo",
+  "fieldtype": "Attach Image",
+  "insert_after": "custom_maintenance_checklist",
+  "label": "Service Completion Photo",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_customer_signature",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_customer_signature",
+  "fieldtype": "Signature",
+  "insert_after": "custom_service_photo",
+  "label": "Customer Signature",
+  "module": "Maintenance Management"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_customer_rating",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_customer_rating",
+  "fieldtype": "Rating",
+  "allow_on_submit": 1,
+  "insert_after": "custom_customer_signature",
+  "label": "Customer Rating",
   "module": "Maintenance Management"
  }
 ]
