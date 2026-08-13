@@ -226,7 +226,7 @@ def after_migrate():
         ]
         for crit, weight in default_criteria:
             settings.append("weighted_criteria", {
-                "criterion": crit,
+                "criterion_name": crit,
                 "weight": weight,
                 "enabled": 1
             })
