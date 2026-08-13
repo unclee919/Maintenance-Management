@@ -1475,16 +1475,21 @@ def fix_settings_name():
 @frappe.whitelist()
 def fix_single_settings():
     print("=== FIXING SINGLE SETTINGS ===")
-    # 1. Get existing data from table if any
     recs = frappe.db.sql("SELECT * FROM `tabField Maintenance Settings`", as_dict=True)
     data = {}
     if recs:
-        data = recs[0]
-        
-    # 2. Clear tabSingles for this doctype
+        data = recs.pop(0)
+    else:
+        # Check tabSingles
+        singles = frappe.db.sql("SELECT field, value FROM `tabSingles` WHERE doctype='Field Maintenance Settings'", as_dict=True)
+        if singles:
+            for s in singles:
+                data[s.field] = s.value
+        else:
+            data = {"enable_gps_tracking": 1, "enable_customer_portal": 1, "auto_assign_technician": 1}
+
     frappe.db.sql("DELETE FROM `tabSingles` WHERE doctype='Field Maintenance Settings'")
     
-    # 3. Insert into tabSingles
     for k, v in data.items():
         if k not in ['name', 'creation', 'modified', 'modified_by', 'owner', 'docstatus', 'idx', '_user_tags', '_comments', '_assign', '_liked_by'] and v is not None:
             frappe.db.sql("""
@@ -1492,12 +1497,9 @@ def fix_single_settings():
                 VALUES ('Field Maintenance Settings', %s, %s)
             """, (k, str(v)))
             
-    # 4. Drop or clear tabField Maintenance Settings table so Frappe knows it's single
     frappe.db.sql("DELETE FROM `tabField Maintenance Settings`")
-    
     frappe.db.commit()
     
-    # Test loading single doc
-    doc = frappe.get_doc("Field Maintenance Settings")
+    doc = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     print("Successfully loaded Single Doc:", doc.name)
     return {"status": "success", "message": "Single settings fixed successfully"}
