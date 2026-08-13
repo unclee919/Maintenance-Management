@@ -60,7 +60,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Scheduled\nDispatched\nIn Progress\nCompleted\nCancelled"
+   "options": "Scheduled\nDispatched\nAccepted\nIn Progress\nCompleted\nCancelled"
   },
   {
    "default": "Medium",
