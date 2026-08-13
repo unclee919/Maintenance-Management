@@ -12,7 +12,8 @@ doc_events = {
         "validate": "maintenance_management.controllers.sales_order.validate",
         "before_save": "maintenance_management.controllers.sales_order.before_save",
         "after_insert": "maintenance_management.controllers.sales_order.after_insert",
-        "on_update": "maintenance_management.controllers.sales_order.on_update"
+        "on_update": "maintenance_management.controllers.sales_order.on_update",
+        "on_submit": "maintenance_management.controllers.sales_order.on_submit"
     },
     "Sales Invoice": {
         "validate": "maintenance_management.controllers.sales_invoice.validate"
@@ -37,3 +38,7 @@ scheduler_events = {
 app_include_css = "/assets/maintenance_management/css/mobile_enhancements.css"
 
 after_migrate = "maintenance_management.maintenance_management.api.after_migrate"
+
+override_doctype_dashboards = {
+    "Sales Order": "maintenance_management.maintenance_management.api.get_sales_order_dashboard"
+}

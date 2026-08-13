@@ -246,12 +246,80 @@ def before_save(doc, method=None):
         else:
             doc.db_set("sla_status", "On Time")
 
+def create_service_appointment(doc):
+    if not doc.get("custom_is_maintenance_order"):
+        return
+    existing = frappe.db.exists("Service Appointment", {"sales_order": doc.name})
+    if not existing:
+        sa = frappe.get_doc({
+            "doctype": "Service Appointment",
+            "customer": doc.customer,
+            "sales_order": doc.name,
+            "status": "Scheduled" if doc.get("custom_assigned_technician") else "New",
+            "priority": doc.get("priority") or "Medium",
+            "scheduled_date": doc.get("custom_scheduled_date_time") or now(),
+            "duration_hours": 2,
+            "technician": doc.get("custom_assigned_technician"),
+            "notes": f"Automated Service Appointment for Maintenance Sales Order {doc.name}"
+        })
+        sa.insert(ignore_permissions=True)
+        if doc.get("custom_assigned_technician"):
+            send_technician_notification(doc, sa.name)
+
+def send_technician_notification(doc, appointment_name):
+    tech = doc.get("custom_assigned_technician")
+    if not tech:
+        return
+    tech_doc = frappe.get_doc("Field Technician", tech)
+    user_email = tech_doc.get("user_id") or tech_doc.get("email")
+    
+    msg = f"""
+    <div style="font-family: Arial, sans-serif; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+        <h2 style="color: #2c3e50; margin-top: 0;">🛠️ New Maintenance Dispatch Assigned</h2>
+        <table style="width: 100%; margin-bottom: 15px;">
+            <tr><td><b>Sales Order:</b></td><td>{doc.name}</td></tr>
+            <tr><td><b>Customer:</b></td><td>{doc.customer}</td></tr>
+            <tr><td><b>Priority:</b></td><td>{doc.get('priority') or 'Medium'}</td></tr>
+            <tr><td><b>Scheduled Date/Time:</b></td><td>{doc.get('custom_scheduled_date_time') or 'As Soon As Possible'}</td></tr>
+            <tr><td><b>Service Appointment:</b></td><td>{appointment_name}</td></tr>
+        </table>
+        <p>Please review the details and click below to accept or reject this assignment:</p>
+        <p style="margin-top: 20px;">
+            <a href="/api/method/maintenance_management.controllers.sales_order.accept_dispatch?appointment_name={appointment_name}" style="background: #2ecc71; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-right: 10px;">✅ Accept Dispatch</a>
+            <a href="/api/method/maintenance_management.controllers.sales_order.reject_dispatch?appointment_name={appointment_name}" style="background: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-right: 10px;">❌ Reject Dispatch</a>
+            <a href="/app/service-appointment/{appointment_name}" style="background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">🔍 View in Portal</a>
+        </p>
+    </div>
+    """
+    if user_email:
+        try:
+            frappe.sendmail(
+                recipients=[user_email],
+                subject=f"New Dispatch Assigned: {doc.name}",
+                message=msg
+            )
+        except Exception:
+            pass
+        try:
+            frappe.get_doc({
+                "doctype": "Notification Log",
+                "subject": f"New Maintenance Dispatch: {doc.name}",
+                "email_content": msg,
+                "for_user": user_email,
+                "document_type": "Service Appointment",
+                "document_name": appointment_name
+            }).insert(ignore_permissions=True)
+        except Exception:
+            pass
+
 def after_insert(doc, method=None):
     _ensure_sql_patch()
     if not doc.get("custom_is_maintenance_order"):
         return
     if doc.custom_maintenance_status == "New" and not doc.get("custom_assigned_technician"):
         auto_assign_tech(doc)
+    if doc.docstatus == 1:
+        create_service_appointment(doc)
 
 def on_update(doc, method=None):
     _ensure_sql_patch()
@@ -259,7 +327,15 @@ def on_update(doc, method=None):
         return
     if doc.custom_maintenance_status == "Assigned" and not doc.get("custom_assigned_technician"):
         auto_assign_tech(doc)
+    if doc.docstatus == 1:
+        create_service_appointment(doc)
     process_erpnext_integration(doc)
+
+def on_submit(doc, method=None):
+    _ensure_sql_patch()
+    if not doc.get("custom_is_maintenance_order"):
+        return
+    create_service_appointment(doc)
 
 @frappe.whitelist()
 def update_technician_location(sales_order, latitude=None, longitude=None, tracking_status="active"):
@@ -357,4 +433,41 @@ def transfer_technician_cash(technician, amount, reference_note=None):
         return {"status": "success", "journal_entry": je.name, "amount": amt}
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Cash Transfer Error")
+        return {"status": "error", "message": str(e)}
+
+@frappe.whitelist()
+def accept_dispatch(appointment_name):
+    """Accepts a maintenance dispatch appointment and updates Sales Order status."""
+    try:
+        sa = frappe.get_doc("Service Appointment", appointment_name)
+        sa.status = "Accepted"
+        sa.save(ignore_permissions=True)
+        if sa.sales_order:
+            so = frappe.get_doc("Sales Order", sa.sales_order)
+            so.custom_maintenance_status = "Accepted"
+            so.save(ignore_permissions=True)
+        frappe.db.commit()
+        return {"status": "success", "message": "Dispatch accepted successfully."}
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Accept Dispatch Error")
+        return {"status": "error", "message": str(e)}
+
+@frappe.whitelist()
+def reject_dispatch(appointment_name, reason="Not Available"):
+    """Rejects a maintenance dispatch appointment, unassigns technician, and returns Sales Order to queue."""
+    try:
+        sa = frappe.get_doc("Service Appointment", appointment_name)
+        sa.status = "Cancelled"
+        sa.notes = f"{sa.notes or ''}\nRejected by technician. Reason: {reason}"
+        sa.save(ignore_permissions=True)
+        if sa.sales_order:
+            so = frappe.get_doc("Sales Order", sa.sales_order)
+            so.custom_maintenance_status = "Pending Confirmation"
+            so.custom_assigned_technician = ""
+            so.assigned_technicians = ""
+            so.save(ignore_permissions=True)
+        frappe.db.commit()
+        return {"status": "success", "message": "Dispatch rejected and order returned to queue for reassignment."}
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Reject Dispatch Error")
         return {"status": "error", "message": str(e)}

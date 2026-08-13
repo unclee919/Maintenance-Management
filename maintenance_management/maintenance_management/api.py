@@ -1579,3 +1579,10 @@ def test_settings():
     except Exception as e:
         print("ERROR LOAD:", str(e))
         return {"status": "error", "message": str(e)}
+
+def get_sales_order_dashboard(data):
+    data['transactions'].append({
+        'label': _('Maintenance'),
+        'items': ['Service Appointment', 'Stock Entry', 'Sales Invoice']
+    })
+    return data
