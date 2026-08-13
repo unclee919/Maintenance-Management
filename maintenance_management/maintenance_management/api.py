@@ -1523,20 +1523,16 @@ def fix_multi_settings():
     frappe.db.sql("DELETE FROM `tabSingles` WHERE doctype='Field Maintenance Settings'")
     
     # 4. Upsert into tabField Maintenance Settings with name='Field Maintenance Settings'
-    exists = frappe.db.exists("Field Maintenance Settings", "Field Maintenance Settings")
-    if not exists:
-        doc = frappe.get_doc({
-            "doctype": "Field Maintenance Settings",
-            "name": "Field Maintenance Settings",
-            **data
-        })
-        doc.insert(ignore_permissions=True)
-    else:
-        frappe.db.sql("""
-            UPDATE `tabField Maintenance Settings` 
-            SET enable_gps_tracking=1, enable_customer_portal=1, auto_assign_technician=1 
-            WHERE name='Field Maintenance Settings'
-        """)
+    frappe.db.sql("DELETE FROM `tabField Maintenance Settings`")
+    frappe.db.commit()
+    
+    doc = frappe.get_doc({
+        "doctype": "Field Maintenance Settings",
+        "name": "Field Maintenance Settings",
+        **data
+    })
+    doc.insert(ignore_permissions=True)
+    frappe.db.commit()
     
     frappe.db.commit()
     
