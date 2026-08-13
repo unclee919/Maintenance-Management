@@ -67,6 +67,32 @@ def after_migrate():
             })
             doc.insert(ignore_permissions=True)
             
+    # 2. Create Number Cards if not exist
+    cards = [
+        ("Active Service Orders Count", "Sales Order", "Count", {"custom_maintenance_status": ["not in", ["Completed", "Cancelled"]]}),
+        ("Pending Invoices Count", "Sales Invoice", "Count", {"status": "Unpaid"}),
+        ("Avg Response Time", "Service Appointment", "Average", {}, "duration_hours"),
+        ("Avg Repair Duration", "Service Appointment", "Average", {}, "duration_hours"),
+        ("Total Maintenance Revenue", "Sales Order", "Sum", {"custom_is_maintenance_order": 1}, "base_grand_total"),
+        ("CSAT Rating", "Sales Order", "Average", {"custom_is_maintenance_order": 1}, "custom_customer_rating"),
+        ("My Open Orders", "Sales Order", "Count", {"custom_maintenance_status": ["not in", ["Completed", "Cancelled"]]}),
+        ("My Completed Today", "Sales Order", "Count", {"custom_maintenance_status": "Completed"}),
+        ("My Efficiency Score", "Field Technician", "Average", {}, "performance_rating")
+    ]
+    for name, dt, func, filters, field in [(c[0], c[1], c[2], c[3], c[4] if len(c)>4 else None) for c in cards]:
+        if not frappe.db.exists("Number Card", name):
+            card = frappe.get_doc({
+                "doctype": "Number Card",
+                "label": name,
+                "document_type": dt,
+                "function": func,
+                "aggregate_function_fieldname": field,
+                "filters_json": json.dumps(filters),
+                "is_standard": 0,
+                "module": "Maintenance Management"
+            })
+            card.insert(ignore_permissions=True)
+
     # 2. Create Charts if not exist
     if not frappe.db.exists("Dashboard Chart", "Orders by Status"):
         chart = frappe.get_doc({
@@ -74,13 +100,26 @@ def after_migrate():
             "chart_name": "Orders by Status",
             "chart_type": "Group By",
             "document_type": "Sales Order",
-            "group_by_based_on": "status",
+            "group_by_based_on": "custom_maintenance_status",
             "group_by_type": "Count",
             "is_standard": 0,
             "module": "Maintenance Management",
-            "time_interval": "Monthly",
-            "timeseries": 0,
             "type": "Donut",
+            "filters_json": "[]"
+        })
+        chart.insert(ignore_permissions=True)
+
+    if not frappe.db.exists("Dashboard Chart", "Mgmt-Order-Trends"):
+        chart = frappe.get_doc({
+            "doctype": "Dashboard Chart",
+            "chart_name": "Mgmt-Order-Trends",
+            "chart_type": "Group By",
+            "document_type": "Sales Order",
+            "group_by_based_on": "custom_maintenance_status",
+            "group_by_type": "Count",
+            "is_standard": 0,
+            "module": "Maintenance Management",
+            "type": "Bar",
             "filters_json": "[]"
         })
         chart.insert(ignore_permissions=True)
@@ -101,6 +140,14 @@ def after_migrate():
         w.insert(ignore_permissions=True)
     
     m_ws = frappe.get_doc("Workspace", "Management Dashboard")
+    m_ws.charts = []
+    m_ws.shortcuts = []
+    m_ws.number_cards = []
+    m_ws.append("charts", {"chart_name": "Orders by Status", "label": "Orders by Status"})
+    for card_name in ["Active Service Orders Count", "Avg Response Time", "Total Maintenance Revenue", "CSAT Rating"]:
+        m_ws.append("number_cards", {"number_card": card_name, "label": card_name})
+    m_ws.append("shortcuts", {"shortcut_name": "Technician Live Tracking", "link_to": "technician-tracking", "type": "Page", "label": "Live Map & Tracking"})
+    m_ws.append("shortcuts", {"shortcut_name": "Field Maintenance Settings", "link_to": "Field Maintenance Settings", "type": "DocType", "label": "System Settings"})
     m_ws.content = json.dumps([
         {"type": "header", "data": {"text": "📊 Executive Maintenance Overview", "col": 12}},
         {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 3}},
@@ -130,6 +177,15 @@ def after_migrate():
         w.insert(ignore_permissions=True)
     
     t_ws = frappe.get_doc("Workspace", "Technician Dashboard")
+    t_ws.charts = []
+    t_ws.shortcuts = []
+    t_ws.number_cards = []
+    for card_name in ["My Open Orders", "My Completed Today", "My Efficiency Score"]:
+        t_ws.append("number_cards", {"number_card": card_name, "label": card_name})
+    t_ws.append("shortcuts", {"shortcut_name": "Service Appointment", "link_to": "Service Appointment", "type": "DocType", "label": "My Appointments"})
+    t_ws.append("shortcuts", {"shortcut_name": "Sales Order", "link_to": "Sales Order", "type": "DocType", "label": "My Sales Orders"})
+    t_ws.append("shortcuts", {"shortcut_name": "Stock Entry", "link_to": "Stock Entry", "type": "DocType", "label": "My Van Stock"})
+    t_ws.append("shortcuts", {"shortcut_name": "Material Request", "link_to": "Material Request", "type": "DocType", "label": "Request Spare Parts"})
     t_ws.content = json.dumps([
         {"type": "header", "data": {"text": "🛠️ My Daily Field Tasks", "col": 12}},
         {"type": "card", "data": {"card_name": "My Open Orders", "col": 4}},
