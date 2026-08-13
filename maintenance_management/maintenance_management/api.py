@@ -150,15 +150,15 @@ def after_migrate():
     m_ws.append("shortcuts", {"shortcut_name": "Technician Live Tracking", "link_to": "technician-tracking", "type": "Page", "label": "Live Map & Tracking"})
     m_ws.append("shortcuts", {"shortcut_name": "Field Maintenance Settings", "link_to": "Field Maintenance Settings", "type": "DocType", "label": "System Settings"})
     m_ws.content = json.dumps([
-        {"type": "header", "data": {"text": "📊 Executive Maintenance Overview", "col": 12}},
-        {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 3}},
-        {"type": "card", "data": {"card_name": "Avg Response Time", "col": 3}},
-        {"type": "card", "data": {"card_name": "Total Maintenance Revenue", "col": 3}},
-        {"type": "card", "data": {"card_name": "CSAT Rating", "col": 3}},
-        {"type": "chart", "data": {"chart_name": "Orders by Status", "col": 12}},
-        {"type": "header", "data": {"text": "🗺️ Operations & Tracking", "col": 12}},
-        {"type": "shortcut", "data": {"shortcut_name": "Technician Live Tracking", "col": 6, "type": "Page", "link_to": "technician-tracking", "label": "Live Map & Tracking"}},
-        {"type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 6, "type": "DocType", "link_to": "Field Maintenance Settings", "label": "System Settings"}}]
+        {"id": "mh1", "type": "header", "data": {"text": "📊 Executive Maintenance Overview", "col": 12}},
+        {"id": "mc1", "type": "card", "data": {"card_name": "Active Service Orders Count", "col": 3}},
+        {"id": "mc2", "type": "card", "data": {"card_name": "Avg Response Time", "col": 3}},
+        {"id": "mc3", "type": "card", "data": {"card_name": "Total Maintenance Revenue", "col": 3}},
+        {"id": "mc4", "type": "card", "data": {"card_name": "CSAT Rating", "col": 3}},
+        {"id": "mch1", "type": "chart", "data": {"chart_name": "Orders by Status", "col": 12}},
+        {"id": "mh2", "type": "header", "data": {"text": "🗺️ Operations & Tracking", "col": 12}},
+        {"id": "ms1", "type": "shortcut", "data": {"shortcut_name": "Technician Live Tracking", "col": 6, "type": "Page", "link_to": "technician-tracking", "label": "Live Map & Tracking"}},
+        {"id": "ms2", "type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 6, "type": "DocType", "link_to": "Field Maintenance Settings", "label": "System Settings"}}]
     )
     m_ws.save(ignore_permissions=True)
 
@@ -188,26 +188,44 @@ def after_migrate():
     t_ws.append("shortcuts", {"shortcut_name": "Stock Entry", "link_to": "Stock Entry", "type": "DocType", "label": "My Van Stock"})
     t_ws.append("shortcuts", {"shortcut_name": "Material Request", "link_to": "Material Request", "type": "DocType", "label": "Request Spare Parts"})
     t_ws.content = json.dumps([
-        {"type": "header", "data": {"text": "🛠️ My Daily Field Tasks", "col": 12}},
-        {"type": "card", "data": {"card_name": "My Open Orders", "col": 4}},
-        {"type": "card", "data": {"card_name": "My Completed Today", "col": 4}},
-        {"type": "card", "data": {"card_name": "My Efficiency Score", "col": 4}},
-        {"type": "header", "data": {"text": "⚡ Quick Actions", "col": 12}},
-        {"type": "shortcut", "data": {"shortcut_name": "Service Appointment", "col": 6, "label": "My Appointments"}},
-        {"type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 6, "label": "My Sales Orders"}},
-        {"type": "header", "data": {"text": "📦 Inventory & Tools", "col": 12}},
-        {"type": "shortcut", "data": {"shortcut_name": "Stock Entry", "col": 6, "label": "My Van Stock"}},
-        {"type": "shortcut", "data": {"shortcut_name": "Material Request", "col": 6, "label": "Request Spare Parts"}}]
+        {"id": "th1", "type": "header", "data": {"text": "🛠️ My Daily Field Tasks", "col": 12}},
+        {"id": "tc1", "type": "card", "data": {"card_name": "My Open Orders", "col": 4}},
+        {"id": "tc2", "type": "card", "data": {"card_name": "My Completed Today", "col": 4}},
+        {"id": "tc3", "type": "card", "data": {"card_name": "My Efficiency Score", "col": 4}},
+        {"id": "th2", "type": "header", "data": {"text": "⚡ Quick Actions", "col": 12}},
+        {"id": "ts1", "type": "shortcut", "data": {"shortcut_name": "Service Appointment", "col": 6, "label": "My Appointments"}},
+        {"id": "ts2", "type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 6, "label": "My Sales Orders"}},
+        {"id": "th3", "type": "header", "data": {"text": "📦 Inventory & Tools", "col": 12}},
+        {"id": "ts3", "type": "shortcut", "data": {"shortcut_name": "Stock Entry", "col": 6, "label": "My Van Stock"}},
+        {"id": "ts4", "type": "shortcut", "data": {"shortcut_name": "Material Request", "col": 6, "label": "Request Spare Parts"}}]
     )
     t_ws.save(ignore_permissions=True)
 
 
 
-    # 5. Clean up redundant Field Service Request from Workspace and Sidebar
+    # 5. Fix Main Maintenance Management Workspace
+    if frappe.db.exists("Workspace", "Maintenance Management"):
+        w = frappe.get_doc("Workspace", "Maintenance Management")
+        w.public = 1
+        w.icon = "tools"
+        w.module = "Maintenance Management"
+        w.label = "Maintenance Management"
+        w.content = json.dumps([
+            {"id": "h1", "type": "header", "data": {"text": "🛠️ Maintenance Operations Control", "level": 2, "col": 12}},
+            {"id": "s1", "type": "shortcut", "data": {"shortcut_name": "Sales Order", "link_to": "Sales Order", "type": "DocType", "label": "Service Orders", "col": 4}},
+            {"id": "s2", "type": "shortcut", "data": {"shortcut_name": "Service Appointment", "link_to": "Service Appointment", "type": "DocType", "label": "Dispatches", "col": 4}},
+            {"id": "s3", "type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "link_to": "Field Maintenance Settings", "type": "DocType", "label": "Settings", "col": 4}},
+            {"id": "h2", "type": "header", "data": {"text": "📈 Dashboards", "level": 3, "col": 12}},
+            {"id": "s4", "type": "shortcut", "data": {"shortcut_name": "Management Dashboard", "link_to": "Management Dashboard", "type": "Workspace", "label": "Manager View", "col": 6}},
+            {"id": "s5", "type": "shortcut", "data": {"shortcut_name": "Technician Dashboard", "link_to": "Technician Dashboard", "type": "Workspace", "label": "Tech View", "col": 6}}
+        ])
+        w.save(ignore_permissions=True)
+
+    # 6. Clean up redundant Field Service Request from Workspace and Sidebar
     frappe.db.sql("DELETE FROM `tabWorkspace Link` WHERE link_to = 'Field Service Request'")
     frappe.db.sql("DELETE FROM `tabWorkspace Shortcut` WHERE link_to = 'Field Service Request'")
     
-    # 6. Initialize Assignment Criteria in Settings
+    # 7. Initialize Assignment Criteria in Settings
     settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
     if not settings.get("weighted_criteria"):
         default_criteria = [
