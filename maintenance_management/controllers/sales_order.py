@@ -471,3 +471,24 @@ def reject_dispatch(appointment_name, reason="Not Available"):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Reject Dispatch Error")
         return {"status": "error", "message": str(e)}
+
+@frappe.whitelist()
+def test_service_appointment_creation():
+    so = frappe.get_doc({
+        "doctype": "Sales Order",
+        "customer": frappe.db.get_value("Customer", {}, "name"),
+        "delivery_date": frappe.utils.add_days(frappe.utils.nowdate(), 2),
+        "custom_is_maintenance_order": 1,
+        "custom_maintenance_status": "New",
+        "priority": "High",
+        "items": [{
+            "item_code": frappe.db.get_value("Item", {"is_stock_item": 0}, "name") or "Service",
+            "qty": 1,
+            "rate": 150,
+            "delivery_date": frappe.utils.add_days(frappe.utils.nowdate(), 2)
+        }]
+    })
+    so.insert(ignore_permissions=True)
+    so.submit()
+    sa = frappe.get_all("Service Appointment", filters={"sales_order": so.name}, fields=["name", "status", "technician"])
+    return {"sales_order": so.name, "service_appointment": sa}
