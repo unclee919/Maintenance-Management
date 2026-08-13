@@ -20,7 +20,9 @@
   "van_warehouse",
   "column_break_2",
   "location",
-  "notes"
+  "notes",
+  "section_break_execution",
+  "custom_maintenance_checklist"
  ],
  "fields": [
   {
@@ -117,8 +119,19 @@
   },
   {
    "fieldname": "notes",
-   "fieldtype": "Text Editor",
-   "label": "Appointment Notes"
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "section_break_execution",
+   "fieldtype": "Section Break",
+   "label": "Service Execution & QC"
+  },
+  {
+   "fieldname": "custom_maintenance_checklist",
+   "fieldtype": "Table",
+   "label": "QC Maintenance Checklist",
+   "options": "Maintenance Checklist Item"
   }
  ],
  "index_web_pages_for_search": 1,

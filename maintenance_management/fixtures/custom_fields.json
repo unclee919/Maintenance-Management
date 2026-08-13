@@ -129,22 +129,11 @@
  },
  {
   "doctype": "Custom Field",
-  "name": "Sales Order Item-custom_maintenance_checklist",
-  "dt": "Sales Order Item",
-  "fieldname": "custom_maintenance_checklist",
-  "fieldtype": "Table",
-  "options": "Maintenance Checklist Item",
-  "insert_after": "custom_sla_status",
-  "label": "QC Maintenance Checklist",
-  "module": "Maintenance Management"
- },
- {
-  "doctype": "Custom Field",
   "name": "Sales Order Item-custom_service_photo",
   "dt": "Sales Order Item",
   "fieldname": "custom_service_photo",
   "fieldtype": "Attach Image",
-  "insert_after": "custom_maintenance_checklist",
+  "insert_after": "custom_sla_status",
   "label": "Service Completion Photo",
   "module": "Maintenance Management"
  },
