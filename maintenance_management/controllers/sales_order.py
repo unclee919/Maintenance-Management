@@ -277,36 +277,45 @@ def create_service_appointment(doc):
 def send_technician_notification(doc, appointment_name, technician_override=None):
     tech = technician_override or doc.get("custom_assigned_technician")
     if not tech:
-        return
+        # Fallback to first available tech if none assigned
+        techs = frappe.get_all("Field Technician", limit=1)
+        if techs:
+            tech = techs[0].name
+        else:
+            return
+
     tech_doc = frappe.get_doc("Field Technician", tech)
-    target_user = tech_doc.get("user")
-    user_email = target_user or tech_doc.get("email")
+    target_user = tech_doc.get("user") or "Administrator"
+    user_email = frappe.db.get_value("User", target_user, "email")
     
-    if user_email and "@" not in user_email:
-        user_email = frappe.db.get_value("User", user_email, "email")
+    settings = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
+    title_tpl = settings.get("notification_title_template") or "🛠️ New Dispatch: {sales_order}"
+    msg_tpl = settings.get("notification_message_template") or "Customer: {customer}\nTime: {time}"
+    sound_effect = settings.get("notification_sound") or "Chime"
     
-    if not target_user and user_email:
-        target_user = frappe.db.get_value("User", {"email": user_email}, "name")
+    formatted_title = title_tpl.format(sales_order=doc.name, customer=doc.customer_name or doc.customer)
+    formatted_msg = msg_tpl.format(sales_order=doc.name, customer=doc.customer_name or doc.customer, time=doc.get('custom_scheduled_date_time') or 'Immediate')
     
     msg = f"""
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 12px; background: #ffffff; border-left: 4px solid #3498db; line-height: 1.4;">
-        <div style="font-weight: bold; font-size: 15px; color: #2c3e50; margin-bottom: 5px;">🛠️ New Dispatch: {doc.name}</div>
-        <div style="font-size: 13px; color: #7f8c8d; margin-bottom: 10px;">
-            <b>Customer:</b> {doc.customer_name or doc.customer}<br>
-            <b>Time:</b> {doc.get('custom_scheduled_date_time') or 'Immediate'}
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 14px; background: #ffffff; border-left: 4px solid #3498db; line-height: 1.5; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <div style="font-weight: bold; font-size: 16px; color: #2c3e50; margin-bottom: 6px;">{formatted_title}</div>
+        <div style="font-size: 13px; color: #555555; margin-bottom: 12px; white-space: pre-line;">
+            {formatted_msg}
+            <br><b>Technician Assigned:</b> {tech}
+            <br><b>Appointment ID:</b> {appointment_name}
         </div>
-        <div style="margin-top: 8px;">
+        <div style="margin-top: 10px; display: flex; gap: 8px;">
             <a href="{get_url()}/api/method/maintenance_management.controllers.sales_order.accept_dispatch?appointment_name={appointment_name}" 
-               style="background: #2ecc71; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; margin-right: 5px;">
-               Accept
+               style="background: #2ecc71; color: white; padding: 6px 14px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block;">
+               ✅ Accept
             </a>
             <a href="{get_url()}/api/method/maintenance_management.controllers.sales_order.reject_dispatch?appointment_name={appointment_name}" 
-               style="background: #e74c3c; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; margin-right: 5px;">
-               Reject
+               style="background: #e74c3c; color: white; padding: 6px 14px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block;">
+               ❌ Reject
             </a>
             <a href="{get_url()}/app/service-appointment/{appointment_name}" 
-               style="background: #3498db; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block;">
-               Details
+               style="background: #3498db; color: white; padding: 6px 14px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block;">
+               🔍 Details
             </a>
         </div>
     </div>
@@ -332,13 +341,15 @@ def send_technician_notification(doc, appointment_name, technician_override=None
                 "document_name": appointment_name
             }).insert(ignore_permissions=True)
             
-            # Real-time notification
+            # Real-time notification with sound & mobile push
             frappe.publish_realtime(
                 "maintenance_notification",
                 {
-                    "title": "🛠️ New Dispatch Assigned",
-                    "message": f"Order {doc.name} for {doc.customer_name or doc.customer}",
-                    "docname": appointment_name
+                    "title": formatted_title,
+                    "message": formatted_msg,
+                    "docname": appointment_name,
+                    "sound": sound_effect,
+                    "push": True
                 },
                 user=target_user
             )

@@ -17,6 +17,36 @@
  ],
  "fields": [
   {
+   "fieldname": "notification_desk_section",
+   "fieldtype": "Section Break",
+   "label": "Notification & Alert Customization (Desk Settings)"
+  },
+  {
+   "default": "🛠️ New Dispatch: {sales_order}",
+   "fieldname": "notification_title_template",
+   "fieldtype": "Data",
+   "label": "Notification Title Template"
+  },
+  {
+   "default": "Customer: {customer}\nTime: {time}",
+   "fieldname": "notification_message_template",
+   "fieldtype": "Small Text",
+   "label": "Notification Message Template"
+  },
+  {
+   "default": "Chime",
+   "fieldname": "notification_sound",
+   "fieldtype": "Select",
+   "label": "Notification Sound Effect",
+   "options": "Default\\nChime\\nBeep\\nAlert"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_mobile_push",
+   "fieldtype": "Check",
+   "label": "Enable Mobile & Browser Push Notifications"
+  },
+  {
    "fieldname": "features_section",
    "fieldtype": "Section Break",
    "label": "Optional Features & Toggles (Phase 1 / Phase 2)"
