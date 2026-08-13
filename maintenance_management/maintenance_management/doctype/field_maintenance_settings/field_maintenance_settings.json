@@ -13,7 +13,9 @@
   "enable_customer_portal",
   "column_break_1",
   "auto_assign_technician",
-  "default_warranty_days"
+  "default_warranty_days",
+  "weighted_criteria_section",
+  "weighted_criteria"
  ],
  "fields": [
   {
@@ -107,12 +109,23 @@
    "fieldtype": "Check",
    "label": "Auto-Assign Technician via Smart Dispatch"
   },
-	  {
-	   "default": "30",
-	   "fieldname": "default_warranty_days",
-	   "fieldtype": "Int",
-	   "label": "Default Warranty Period (Days)"
-	  },
+  {
+   "default": "30",
+   "fieldname": "default_warranty_days",
+   "fieldtype": "Int",
+   "label": "Default Warranty Period (Days)"
+  },
+  {
+   "fieldname": "weighted_criteria_section",
+   "fieldtype": "Section Break",
+   "label": "7-Criteria Weighted Assignment Engine"
+  },
+  {
+   "fieldname": "weighted_criteria",
+   "fieldtype": "Table",
+   "label": "Assignment Criteria Weights",
+   "options": "Weighted Assignment Criterion"
+  },
 	  {
 	   "fieldname": "reporting_section",
 	   "fieldtype": "Section Break",
