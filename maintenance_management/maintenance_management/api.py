@@ -1473,70 +1473,19 @@ def fix_settings_name():
     return "Settings name fixed successfully"
 
 @frappe.whitelist()
-def fix_multi_settings():
-    print("=== FIXING MULTI-RECORD SETTINGS MODEL ===")
-    # 1. Set issingle = 0 in tabDocType so it acts as a normal table doc
-    frappe.db.sql("UPDATE `tabDocType` SET issingle=0 WHERE name='Field Maintenance Settings'")
+def test_single_doc():
+    frappe.db.sql("UPDATE `tabDocType` SET issingle=1 WHERE name='Field Maintenance Settings'")
     frappe.db.commit()
     
-    # 2. Extract data from tabSingles if any exist
-    singles = frappe.db.sql("SELECT field, value FROM `tabSingles` WHERE doctype='Field Maintenance Settings'", as_dict=True)
-    data = {"name": "Field Maintenance Settings"}
-    if singles:
-        for s in singles:
-            data[s.field] = s.value
-    else:
-        data.update({
-            "enable_gps_tracking": 1,
-            "enable_customer_portal": 1,
-            "auto_assign_technician": 1,
-            "company_radius_km": 0.5,
-            "company_longitude": 30.738,
-            "company_latitude": 28.345,
-            "require_human_confirmation": 1,
-            "enable_price_approval": 1,
-            "enable_health_check": 1,
-            "enable_monthly_report": 1,
-            "monthly_report_email": "manager@elmrkz.cloud",
-            "response_time_threshold_mins": 30,
-            "alert_email_recipients": "manager@elmrkz.cloud",
-            "enable_weekly_report": 1,
-            "weekly_report_email": "manager@elmrkz.cloud",
-            "send_weekly_report_to_whatsapp": 1,
-            "whatsapp_report_group_id": "maintenance_managers_group",
-            "enable_online_payment_link": 1,
-            "payment_gateway_url": "https://pay.elmrkz.cloud/pay",
-            "enable_low_stock_alerts": 1,
-            "low_stock_threshold_qty": 3,
-            "enable_auto_reorder": 1,
-            "reorder_qty": 10,
-            "enable_forecast_auto_po": 1,
-            "enable_daily_utilization_report": 1,
-            "utilization_report_email": "supervisors@elmrkz.cloud",
-            "enable_price_alert": 1,
-            "price_alert_threshold_pct": 5.0,
-            "enable_fallback_supplier": 1,
-            "default_warranty_days": 30
-        })
-        
-    # 3. Clear tabSingles
     frappe.db.sql("DELETE FROM `tabSingles` WHERE doctype='Field Maintenance Settings'")
-    
-    # 4. Upsert into tabField Maintenance Settings with name='Field Maintenance Settings'
-    frappe.db.sql("DELETE FROM `tabField Maintenance Settings`")
+    frappe.db.sql("INSERT INTO `tabSingles` (doctype, field, value) VALUES ('Field Maintenance Settings', 'enable_gps_tracking', '1')")
+    frappe.db.sql("INSERT INTO `tabSingles` (doctype, field, value) VALUES ('Field Maintenance Settings', 'enable_customer_portal', '1')")
     frappe.db.commit()
     
-    doc = frappe.get_doc({
-        "doctype": "Field Maintenance Settings",
-        "name": "Field Maintenance Settings",
-        **data
-    })
-    doc.insert(ignore_permissions=True)
-    frappe.db.commit()
-    
-    frappe.db.commit()
-    
-    # Test loading
-    doc = frappe.get_doc("Field Maintenance Settings", "Field Maintenance Settings")
-    print("Successfully loaded Multi-record Settings Doc:", doc.name)
-    return {"status": "success", "message": "Settings model converted to multi-record successfully"}
+    try:
+        doc = frappe.get_doc("Field Maintenance Settings")
+        print("SUCCESS:", doc.name, doc.enable_gps_tracking)
+        return {"status": "success", "doc": doc.name}
+    except Exception as e:
+        print("FAILED:", str(e))
+        return {"status": "error", "message": str(e)}
