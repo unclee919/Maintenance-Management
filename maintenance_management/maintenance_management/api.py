@@ -86,7 +86,7 @@ def after_migrate():
                 "label": name,
                 "document_type": dt,
                 "function": func,
-                "aggregate_function_fieldname": field,
+                "aggregate_function_based_on": field,
                 "filters_json": json.dumps(filters),
                 "is_standard": 0,
                 "module": "Maintenance Management"
