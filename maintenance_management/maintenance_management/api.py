@@ -85,62 +85,66 @@ def after_migrate():
         })
         chart.insert(ignore_permissions=True)
 
-    # 3. Update Maintenance Management Workspace Content
-    if not frappe.db.exists("Workspace", "Maintenance Management"):
+    # 3. Create/Update Management Dashboard Workspace
+    if not frappe.db.exists("Workspace", "Management Dashboard"):
         w = frappe.get_doc({
             "doctype": "Workspace",
-            "name": "Maintenance Management",
-            "label": "Maintenance Management",
+            "name": "Management Dashboard",
+            "label": "Management Dashboard",
             "module": "Maintenance Management",
             "app": "maintenance_management",
             "public": 1,
             "type": "Workspace",
-            "icon": "tools",
+            "icon": "chart-bar",
             "sequence_id": 1.0
         })
         w.insert(ignore_permissions=True)
-        
-    ws = frappe.get_doc("Workspace", "Maintenance Management")
-    ws.icon = "tools"
-    ws.sequence_id = 1.0
-    ws.content = json.dumps([
-        {"type": "header", "data": {"text": "📊 Maintenance Management Operations & Executive Summary", "col": 12}},
-        {"type": "spacer", "data": {"col": 12}},
+    
+    m_ws = frappe.get_doc("Workspace", "Management Dashboard")
+    m_ws.content = json.dumps([
+        {"type": "header", "data": {"text": "📊 Executive Maintenance Overview", "col": 12}},
         {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 3}},
-        {"type": "card", "data": {"card_name": "Pending Invoices Count", "col": 3}},
         {"type": "card", "data": {"card_name": "Avg Response Time", "col": 3}},
-        {"type": "card", "data": {"card_name": "Avg Repair Duration", "col": 3}},
-        {"type": "spacer", "data": {"col": 12}},
+        {"type": "card", "data": {"card_name": "Total Maintenance Revenue", "col": 3}},
+        {"type": "card", "data": {"card_name": "CSAT Rating", "col": 3}},
         {"type": "chart", "data": {"chart_name": "Orders by Status", "col": 12}},
-        {"type": "spacer", "data": {"col": 12}},
-        {"type": "header", "data": {"text": "🗺️ Live Operations & Technician Tracking", "col": 12}},
+        {"type": "header", "data": {"text": "🗺️ Operations & Tracking", "col": 12}},
         {"type": "shortcut", "data": {"shortcut_name": "Technician Live Tracking", "col": 6, "type": "Page", "link_to": "technician-tracking", "label": "Live Map & Tracking"}},
-        {"type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 6, "type": "DocType", "link_to": "Field Maintenance Settings", "label": "Settings & Toggles"}},
-        {"type": "spacer", "data": {"col": 12}},
-        {"type": "header", "data": {"text": "⚡ Core Modules & Quick Links", "col": 12}},
-        {"type": "shortcut", "data": {"shortcut_name": "Field Technician", "col": 4}},
-        {"type": "shortcut", "data": {"shortcut_name": "Service Appointment", "col": 4}},
-        {"type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 4}},
-        {"type": "shortcut", "data": {"shortcut_name": "AMC Contract", "col": 4}},
-    ])
-    ws.save(ignore_permissions=True)
+        {"type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 6, "type": "DocType", "link_to": "Field Maintenance Settings", "label": "System Settings"}}]
+    )
+    m_ws.save(ignore_permissions=True)
 
-    # 4. Update Technician Dashboard Workspace Content
-    if frappe.db.exists("Workspace", "Technician Dashboard"):
-        ws_tech = frappe.get_doc("Workspace", "Technician Dashboard")
-        ws_tech.type = "Workspace"
-        ws_tech.content = json.dumps([
-            {"type": "header", "data": {"text": "🛠️ Technician Field Operations & Portal", "col": 12}},
-            {"type": "spacer", "data": {"col": 12}},
-            {"type": "card", "data": {"card_name": "Active Service Orders Count", "col": 6}},
-            {"type": "card", "data": {"card_name": "Available Technicians", "col": 6}},
-            {"type": "spacer", "data": {"col": 12}},
-            {"type": "header", "data": {"text": "🚀 Field Action Shortcuts", "col": 12}},
-            {"type": "shortcut", "data": {"shortcut_name": "Service Appointment", "col": 4}},
-            {"type": "shortcut", "data": {"shortcut_name": "Van Warehouse", "col": 4}},
-            {"type": "shortcut", "data": {"shortcut_name": "Field Technician Profile", "col": 4}},
-        ])
-        ws_tech.save(ignore_permissions=True)
+    # 4. Create/Update Technician Dashboard Workspace
+    if not frappe.db.exists("Workspace", "Technician Dashboard"):
+        w = frappe.get_doc({
+            "doctype": "Workspace",
+            "name": "Technician Dashboard",
+            "label": "Technician Dashboard",
+            "module": "Maintenance Management",
+            "app": "maintenance_management",
+            "public": 1,
+            "type": "Workspace",
+            "icon": "user",
+            "sequence_id": 2.0
+        })
+        w.insert(ignore_permissions=True)
+    
+    t_ws = frappe.get_doc("Workspace", "Technician Dashboard")
+    t_ws.content = json.dumps([
+        {"type": "header", "data": {"text": "🛠️ My Daily Field Tasks", "col": 12}},
+        {"type": "card", "data": {"card_name": "My Open Orders", "col": 4}},
+        {"type": "card", "data": {"card_name": "My Completed Today", "col": 4}},
+        {"type": "card", "data": {"card_name": "My Efficiency Score", "col": 4}},
+        {"type": "header", "data": {"text": "⚡ Quick Actions", "col": 12}},
+        {"type": "shortcut", "data": {"shortcut_name": "Service Appointment", "col": 6, "label": "My Appointments"}},
+        {"type": "shortcut", "data": {"shortcut_name": "Sales Order", "col": 6, "label": "My Sales Orders"}},
+        {"type": "header", "data": {"text": "📦 Inventory & Tools", "col": 12}},
+        {"type": "shortcut", "data": {"shortcut_name": "Stock Entry", "col": 6, "label": "My Van Stock"}},
+        {"type": "shortcut", "data": {"shortcut_name": "Material Request", "col": 6, "label": "Request Spare Parts"}}]
+    )
+    t_ws.save(ignore_permissions=True)
+
+
 
     # 5. Clean up redundant Field Service Request from Workspace and Sidebar
     frappe.db.sql("DELETE FROM `tabWorkspace Link` WHERE link_to = 'Field Service Request'")
