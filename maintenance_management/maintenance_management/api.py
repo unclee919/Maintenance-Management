@@ -1475,6 +1475,10 @@ def fix_settings_name():
 @frappe.whitelist()
 def fix_single_settings():
     print("=== FIXING SINGLE SETTINGS ===")
+    # 1. Force DocType to be single in database
+    frappe.db.sql("UPDATE `tabDocType` SET issingle=1 WHERE name='Field Maintenance Settings'")
+    frappe.db.commit()
+    
     recs = frappe.db.sql("SELECT * FROM `tabField Maintenance Settings`", as_dict=True)
     data = {}
     if recs:
