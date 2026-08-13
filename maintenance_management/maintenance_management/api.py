@@ -145,7 +145,7 @@ def after_migrate():
     m_ws.number_cards = []
     m_ws.append("charts", {"chart_name": "Orders by Status", "label": "Orders by Status"})
     for card_name in ["Active Service Orders Count", "Avg Response Time", "Total Maintenance Revenue", "CSAT Rating"]:
-        m_ws.append("number_cards", {"number_card": card_name, "label": card_name})
+        m_ws.append("number_cards", {"number_card_name": card_name, "label": card_name})
     m_ws.append("shortcuts", {"shortcut_name": "Technician Live Tracking", "link_to": "technician-tracking", "type": "Page", "label": "Live Map & Tracking"})
     m_ws.append("shortcuts", {"shortcut_name": "Field Maintenance Settings", "link_to": "Field Maintenance Settings", "type": "DocType", "label": "System Settings"})
     m_ws.content = json.dumps([
