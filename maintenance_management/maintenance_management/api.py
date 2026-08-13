@@ -1586,3 +1586,11 @@ def get_sales_order_dashboard(data):
         'items': ['Service Appointment', 'Stock Entry', 'Sales Invoice']
     })
     return data
+
+
+def get_sales_order_dashboard(data):
+    data['transactions'].append({
+        'label': _('Maintenance'),
+        'items': ['Service Appointment', 'Stock Entry', 'Sales Invoice']
+    })
+    return data
