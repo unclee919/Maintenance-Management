@@ -1312,3 +1312,9 @@ frappe.ui.form.on('Service Appointment', {
 
     frappe.db.commit()
     return "Service Appointment Client Script updated successfully."
+
+@frappe.whitelist()
+def check_modules():
+    mods = frappe.get_all("Module Def", fields=["name", "module_name", "app"])
+    print("MODULE DEFS:", mods)
+    return mods
