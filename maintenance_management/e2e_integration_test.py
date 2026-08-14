@@ -7,7 +7,7 @@ def run_e2e_integration_test():
     
     # 1. IoT Fault Detection Simulation
     print("\n[Step 1] Simulating IoT Fault Detection...")
-    from maintenance_management.maintenance_management.api import iot_sensor_fault_webhook_with_nearest_dispatch
+    from maintenance_management.api import iot_sensor_fault_webhook_with_nearest_dispatch
     
     # Sample fault from HVAC sensor
     iot_res = iot_sensor_fault_webhook_with_nearest_dispatch(
@@ -44,7 +44,7 @@ def run_e2e_integration_test():
     
     # 3. Billing & Spare Parts Addition
     print("\n[Step 3] Adding Spare Parts to Billing...")
-    from maintenance_management.maintenance_management.api import technician_add_billing_items
+    from maintenance_management.api import technician_add_billing_items
     
     billing_items = [
         {"item_code": "FILT-003", "qty": 1, "rate": 150}
@@ -66,7 +66,7 @@ def run_e2e_integration_test():
     
     # 5. WhatsApp Payment Settlement Link
     print("\n[Step 5] Generating WhatsApp Payment Link...")
-    from maintenance_management.maintenance_management.api import generate_whatsapp_payment_deep_link
+    from maintenance_management.api import generate_whatsapp_payment_deep_link
     
     pay_res = generate_whatsapp_payment_deep_link(so_name, so.grand_total)
     if pay_res.get("status") != "success":

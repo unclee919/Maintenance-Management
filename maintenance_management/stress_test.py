@@ -3,7 +3,7 @@ import time
 import requests
 import statistics
 
-TARGET_URL = "https://erp.elmrkz.cloud/api/method/maintenance_management.maintenance_management.api.get_maintenance_kpis"
+TARGET_URL = "https://erp.elmrkz.cloud/api/method/maintenance_management.api.get_maintenance_kpis"
 NUM_THREADS = 20
 REQUESTS_PER_THREAD = 10
 

@@ -18,7 +18,7 @@ def verify():
         
     print("Testing notification trigger...")
     try:
-        from maintenance_management.maintenance_management.api import test_technician_notification
+        from maintenance_management.api import test_technician_notification
         res = test_technician_notification()
         print("Notification test result:", res)
     except Exception as e:
