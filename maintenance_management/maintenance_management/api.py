@@ -1608,14 +1608,14 @@ def test_accept_reject_workflow():
     
     sa_list = frappe.get_all('Service Appointment', filters={'sales_order': so_name}, limit=1)
     if not sa_list:
-        from maintenance_management.controllers.sales_order import create_service_appointment
+        from maintenance_management.maintenance_management.controllers.sales_order import create_service_appointment
         so_doc = frappe.get_doc('Sales Order', so_name)
         create_service_appointment(so_doc)
         sa_list = frappe.get_all('Service Appointment', filters={'sales_order': so_name}, limit=1)
         
     sa_name = sa_list[0].name if sa_list else so_name
         
-    from maintenance_management.controllers.sales_order import accept_dispatch, reject_dispatch
+    from maintenance_management.maintenance_management.controllers.sales_order import accept_dispatch, reject_dispatch
     accept_res = accept_dispatch(sa_name)
     status_after_accept = frappe.db.get_value('Sales Order', so_name, 'custom_maintenance_status')
     
@@ -1668,7 +1668,7 @@ def test_technician_notification(user=None):
         "custom_scheduled_date_time": frappe.utils.now()
     })
     
-    from maintenance_management.controllers.sales_order import send_technician_notification
+    from maintenance_management.maintenance_management.controllers.sales_order import send_technician_notification
     # We pass a dummy appointment name
     send_technician_notification(doc, "TEST-APP-001", technician_override=None)
     
