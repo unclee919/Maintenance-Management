@@ -30,6 +30,7 @@ def fix_workspace():
         w.link_to = None
         w.icon = "settings"
         w.is_standard = 1
+        w.flags.ignore_links = True
         w.save(ignore_permissions=True)
     except Exception as e:
         pass
@@ -202,6 +203,7 @@ def after_migrate():
             {"id": "s4", "type": "shortcut", "data": {"shortcut_name": "Management Dashboard", "link_to": "Management Dashboard", "type": "Workspace", "label": "Manager View", "col": 6}},
             {"id": "s5", "type": "shortcut", "data": {"shortcut_name": "Technician Dashboard", "link_to": "Technician Dashboard", "type": "Workspace", "label": "Tech View", "col": 6}}
         ])
+        w.flags.ignore_links = True
         w.save(ignore_permissions=True)
 
     # 6. Clean up redundant Field Service Request from Workspace and Sidebar
