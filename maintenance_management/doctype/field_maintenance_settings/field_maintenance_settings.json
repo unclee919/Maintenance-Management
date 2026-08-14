@@ -14,10 +14,56 @@
   "column_break_1",
   "auto_assign_technician",
   "default_warranty_days",
-  "integration_section",
-  "webhook_url"
+  "weighted_criteria_section",
+  "weighted_criteria"
  ],
  "fields": [
+  {
+   "fieldname": "notification_desk_section",
+   "fieldtype": "Section Break",
+   "label": "Notification & Alert Customization (Desk Settings)"
+  },
+  {
+   "default": "🛠️ New Dispatch: {sales_order}",
+   "fieldname": "notification_title_template",
+   "fieldtype": "Data",
+   "label": "Notification Title Template"
+  },
+  {
+   "default": "Customer: {customer}\nTime: {time}",
+   "fieldname": "notification_message_template",
+   "fieldtype": "Small Text",
+   "label": "Notification Message Template"
+  },
+	  {
+	   "default": "Chime",
+	   "fieldname": "notification_sound",
+	   "fieldtype": "Select",
+	   "label": "Notification Sound Effect",
+	   "options": "Default\nChime\nBeep\nAlert\nCustom"
+	  },
+	  {
+	   "fieldname": "notification_sound_file",
+	   "fieldtype": "Attach",
+	   "label": "Custom Notification Sound File",
+	   "depends_on": "eval:doc.notification_sound=='Custom'"
+	  },
+  {
+   "default": "1",
+   "fieldname": "enable_mobile_push",
+   "fieldtype": "Check",
+   "label": "Enable Mobile & Browser Push Notifications"
+  },
+	  {
+	   "fieldname": "test_notification",
+	   "fieldtype": "Button",
+	   "label": "Test Notification & Sound"
+	  },
+	  {
+	   "fieldname": "check_connectivity",
+	   "fieldtype": "Button",
+	   "label": "Check Server Connectivity"
+	  },
   {
    "fieldname": "features_section",
    "fieldtype": "Section Break",
@@ -70,19 +116,155 @@
    "label": "Default Warranty Period (Days)"
   },
   {
-   "fieldname": "integration_section",
+   "fieldname": "weighted_criteria_section",
    "fieldtype": "Section Break",
-   "label": "Integrations & Automation"
+   "label": "7-Criteria Weighted Assignment Engine"
   },
   {
-   "fieldname": "webhook_url",
-   "fieldtype": "Data",
-   "label": "n8n / External Webhook URL for Outbound Events"
-  }
- ],
+   "fieldname": "weighted_criteria",
+   "fieldtype": "Table",
+   "label": "Assignment Criteria Weights",
+   "options": "Weighted Assignment Criterion"
+  },
+	  {
+	   "fieldname": "reporting_section",
+	   "fieldtype": "Section Break",
+	   "label": "Automated Reporting & Alerting Configuration"
+	  },
+	  {
+	   "default": "1",
+	   "fieldname": "enable_monthly_report",
+	   "fieldtype": "Check",
+	   "label": "Enable Automated Monthly Performance Report"
+	  },
+	  {
+	   "fieldname": "monthly_report_email",
+	   "fieldtype": "Data",
+	   "label": "Monthly Report Recipient Email",
+	   "default": "manager@elmrkz.cloud"
+	  },
+	  {
+	   "default": "30",
+	   "fieldname": "response_time_threshold_mins",
+	   "fieldtype": "Int",
+	   "label": "Response Time Alert Threshold (Mins)"
+	  },
+		  {
+		   "default": "manager@elmrkz.cloud",
+		   "fieldname": "alert_email_recipients",
+		   "fieldtype": "Data",
+		   "label": "Alert Email Recipients"
+		  },
+		  {
+		   "fieldname": "weekly_report_section",
+		   "fieldtype": "Section Break",
+		   "label": "Automated Weekly Report & Payment Gateway Configuration"
+		  },
+		  {
+		   "default": "1",
+		   "fieldname": "enable_weekly_report",
+		   "fieldtype": "Check",
+		   "label": "Enable Automated Weekly Performance Report"
+		  },
+		  {
+		   "fieldname": "weekly_report_email",
+		   "fieldtype": "Data",
+		   "label": "Weekly Report Recipient Email",
+		   "default": "manager@elmrkz.cloud"
+		  },
+		  {
+		   "default": "1",
+		   "fieldname": "send_weekly_report_to_whatsapp",
+		   "fieldtype": "Check",
+		   "label": "Send Weekly Report to WhatsApp Group"
+		  },
+		  {
+		   "fieldname": "whatsapp_report_group_id",
+		   "fieldtype": "Data",
+		   "label": "WhatsApp Group ID / Number for Reports",
+		   "default": "maintenance_managers_group"
+		  },
+		  {
+		   "default": "1",
+		   "fieldname": "enable_online_payment_link",
+		   "fieldtype": "Check",
+		   "label": "Include Online Payment Link in WhatsApp Billing"
+		  },
+			  {
+			   "fieldname": "payment_gateway_url",
+			   "fieldtype": "Data",
+			   "label": "Payment Gateway Base URL (Paymob / Vodafone Cash)",
+			   "default": "https://pay.elmrkz.cloud/pay"
+			  },
+			  {
+			   "fieldname": "inventory_section",
+			   "fieldtype": "Section Break",
+			   "label": "Van Warehouse Low-Stock Alert Configuration"
+			  },
+			  {
+			   "default": "1",
+			   "fieldname": "enable_low_stock_alerts",
+			   "fieldtype": "Check",
+			   "label": "Enable Van Warehouse Low-Stock WhatsApp Alerts"
+			  },
+				  {
+				   "default": "3",
+				   "fieldname": "low_stock_threshold_qty",
+				   "fieldtype": "Int",
+				   "label": "Low-Stock Alert Threshold Quantity"
+				  },
+				  {
+				   "default": "1",
+				   "fieldname": "enable_auto_reorder",
+				   "fieldtype": "Check",
+				   "label": "Enable Automatic Material Request on Low-Stock"
+				  },
+				  {
+				   "default": "10",
+				   "fieldname": "reorder_qty",
+				   "fieldtype": "Int",
+				   "label": "Default Reorder Quantity"
+				  },
+				  {
+				   "default": "1",
+				   "fieldname": "enable_forecast_auto_po",
+				   "fieldtype": "Check",
+				   "label": "Enable Auto-Purchase Order when 7-Day Forecast Exceeds Stock"
+				  },
+				  {
+				   "default": "1",
+				   "fieldname": "enable_daily_utilization_report",
+				   "fieldtype": "Check",
+				   "label": "Enable Automated Daily Technician Utilization Report"
+				  },
+				  {
+				   "default": "supervisors@elmrkz.cloud",
+				   "fieldname": "utilization_report_email",
+				   "fieldtype": "Data",
+				   "label": "Supervisor Report Email / WhatsApp Group"
+				  },
+				  {
+				   "default": "1",
+				   "fieldname": "enable_price_alert",
+				   "fieldtype": "Check",
+				   "label": "Enable Price Fluctuation Emergency Alerts"
+				  },
+				  {
+				   "default": "5.0",
+				   "fieldname": "price_alert_threshold_pct",
+				   "fieldtype": "Float",
+				   "label": "Price Fluctuation Alert Threshold (%)"
+				  },
+				  {
+				   "default": "1",
+				   "fieldname": "enable_fallback_supplier",
+				   "fieldtype": "Check",
+				   "label": "Enable Automatic Fallback Supplier Routing on Stock-Out"
+				  }
+				 ],
  "icon": "octicon octicon-settings",
  "idx": 1,
- "is_single": 1,
+ "is_single": 0,
  "links": [],
  "modified": "2026-08-12 00:00:00.000000",
  "modified_by": "Administrator",

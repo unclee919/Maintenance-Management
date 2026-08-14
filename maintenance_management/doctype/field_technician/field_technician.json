@@ -10,6 +10,7 @@
   "user",
   "phone",
   "service_zone",
+  "warehouse",
   "status",
   "current_location"
  ],
@@ -38,6 +39,12 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Service Zone / Area"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Technician Van Warehouse",
+   "options": "Warehouse"
   },
   {
    "default": "Available",
