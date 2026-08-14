@@ -141,6 +141,7 @@ def after_migrate():
         {"id": "ms1", "type": "shortcut", "data": {"shortcut_name": "Technician Live Tracking", "col": 6, "type": "Page", "link_to": "technician-tracking", "label": "Live Map & Tracking"}},
         {"id": "ms2", "type": "shortcut", "data": {"shortcut_name": "Field Maintenance Settings", "col": 6, "type": "DocType", "link_to": "Field Maintenance Settings", "label": "System Settings"}}]
     )
+    m_ws.flags.ignore_links = True
     m_ws.save(ignore_permissions=True)
 
     # 4. Create/Update Technician Dashboard Workspace
@@ -180,6 +181,7 @@ def after_migrate():
         {"id": "ts3", "type": "shortcut", "data": {"shortcut_name": "Stock Entry", "col": 6, "label": "My Van Stock"}},
         {"id": "ts4", "type": "shortcut", "data": {"shortcut_name": "Material Request", "col": 6, "label": "Request Spare Parts"}}]
     )
+    t_ws.flags.ignore_links = True
     t_ws.save(ignore_permissions=True)
 
 
